@@ -1,0 +1,2049 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>副業意思決定OS — フリーランス収支シミュレーター v6</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;900&family=DM+Mono:wght@400;500;600&display=swap');
+
+/* ════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════ */
+:root {
+  --ink:     #0c0a08;
+  --ink-60:  rgba(12,10,8,.6);
+  --ink-30:  rgba(12,10,8,.3);
+  --bg:      #f2efe8;
+  --bg2:     #ece9e0;
+  --sur:     #ffffff;
+  --sur2:    #faf8f3;
+  --bdr:     #e0dbd0;
+
+  --red:     #bf3318;
+  --red-l:   #fdeee9;
+  --red-m:   #f0b8a8;
+  --grn:     #15774a;
+  --grn-l:   #e8f7ee;
+  --grn-m:   #9fd8b8;
+  --blu:     #1348a0;
+  --blu-l:   #eaf0ff;
+  --blu-m:   #a8c0f0;
+  --amb:     #9a6800;
+  --amb-l:   #fff6dc;
+  --amb-m:   #e8c84a;
+  --pur:     #5e2fa0;
+  --pur-l:   #f2ecff;
+
+  --r:       14px;
+  --r-sm:    9px;
+  --sh:      0 2px 16px rgba(0,0,0,.07);
+  --sh-md:   0 4px 28px rgba(0,0,0,.12);
+}
+
+/* ════════════════════════════════
+   RESET & BASE
+════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding-bottom: 100px;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'DM Mono', monospace; }
+.syne { font-family: 'Syne', sans-serif; }
+
+/* ════════════════════════════════
+   HEADER
+════════════════════════════════ */
+.hdr {
+  background: var(--ink);
+  padding: 16px 20px 14px;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 20px rgba(0,0,0,.25);
+}
+.hdr-inner {
+  max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.hdr-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.hdr-logo {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg,#4ade80,#1a8c52);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.hdr-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; color: #fff; letter-spacing: -.3px; }
+.hdr-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 1px; text-transform: uppercase; }
+.hdr-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.4); padding: 4px 10px; border-radius: 99px;
+  display: none;
+}
+@media(min-width:480px){ .hdr-badge { display: block; } }
+
+/* ════════════════════════════════
+   USER TYPE TABS
+════════════════════════════════ */
+.utype-wrap { background: var(--ink); border-top: 1px solid rgba(255,255,255,.06); padding: 0 20px 14px; }
+.utype { display: flex; gap: 0; max-width: 760px; margin: 0 auto; }
+.ut { flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 700;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: 1.5px solid rgba(255,255,255,.1); background: transparent;
+  color: rgba(255,255,255,.35); cursor: pointer; transition: all .15s;
+  letter-spacing: .3px;
+}
+.ut:first-child { border-radius: 8px 0 0 8px; }
+.ut:last-child  { border-radius: 0 8px 8px 0; }
+.ut:not(:first-child) { border-left: none; }
+.ut.on { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.2); }
+
+/* ════════════════════════════════
+   LAYOUT
+════════════════════════════════ */
+.wrap { max-width: 760px; margin: 0 auto; padding: 18px 14px; }
+.sec-lbl {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--ink-60); margin: 22px 0 9px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-lbl::after { content: ''; flex: 1; height: 1px; background: var(--bdr); }
+
+/* ════════════════════════════════
+   DISCLAIMER
+════════════════════════════════ */
+.disclaimer {
+  display: flex; align-items: flex-start; gap: 9px;
+  background: var(--amb-l); border: 1px solid var(--amb-m); border-left: 3px solid var(--amb);
+  border-radius: var(--r-sm); padding: 10px 13px;
+  font-size: 11px; color: var(--amb); font-weight: 500; line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+/* ════════════════════════════════
+   VERDICT (TOP)
+════════════════════════════════ */
+.vt {
+  border-radius: var(--r); overflow: hidden;
+  margin-bottom: 12px; box-shadow: var(--sh-md);
+  border: 1.5px solid transparent;
+}
+.vt-go     { border-color: var(--grn-m); }
+.vt-caution{ border-color: var(--amb-m); }
+.vt-stop   { border-color: var(--red-m); }
+.vt-pending{ border-color: var(--bdr); }
+
+.vt-head {
+  padding: 14px 18px 12px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.vt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.vt-eye  { font-size: 9px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; opacity: .5; margin-bottom: 3px; }
+.vt-ttl  {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(14px,3.5vw,18px); font-weight: 800; line-height: 1.3;
+}
+.vt-body { padding: 2px 18px 14px; display: flex; flex-direction: column; gap: 6px; }
+.vt-r    { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.5; }
+.vt-ri   { flex-shrink: 0; }
+
+.vt-go     .vt-head { background: var(--grn-l); }
+.vt-go     .vt-ttl  { color: var(--grn); }
+.vt-go     .vt-body { background: #f2fdf6; }
+.vt-caution.vt-head { background: var(--amb-l); }
+.vt-caution .vt-ttl { color: var(--amb); }
+.vt-caution .vt-body{ background: #fffdf0; }
+.vt-stop   .vt-head { background: var(--red-l); }
+.vt-stop   .vt-ttl  { color: var(--red); }
+.vt-stop   .vt-body { background: #fff7f5; }
+.vt-pending.vt-head { background: var(--sur2); }
+.vt-pending .vt-ttl { color: var(--ink-60); }
+.vt-pending.vt-body { background: var(--bg); }
+
+/* ════════════════════════════════
+   CARD
+════════════════════════════════ */
+.card {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 16px; margin-bottom: 10px; box-shadow: var(--sh);
+}
+.card-ttl {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--ink-60); margin-bottom: 13px;
+}
+
+/* ════════════════════════════════
+   INPUT SYSTEM
+════════════════════════════════ */
+.mode-sw {
+  display: flex; border: 1.5px solid var(--bdr); border-radius: 8px;
+  overflow: hidden; margin-bottom: 13px;
+}
+.sw-btn {
+  flex: 1; padding: 8px; font-size: 11px; font-weight: 700;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: none; background: transparent; color: var(--ink-60); cursor: pointer; transition: all .15s;
+}
+.sw-btn.on { background: var(--ink); color: #fff; }
+
+.ig  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ig3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.ig-full { grid-column: 1/-1; }
+
+.fl { font-size: 9px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--ink-60); margin-bottom: 4px; line-height: 1.4; }
+.fl-note { font-size: 9px; font-weight: 400; color: var(--ink-30); letter-spacing: 0; text-transform: none; }
+
+.fw { position: relative; display: flex; align-items: center; }
+.fw input, .fw select {
+  width: 100%; padding: 10px 10px 10px 26px;
+  border: 1.5px solid var(--bdr); border-radius: 8px;
+  font-size: 14px; font-family: 'DM Mono', monospace; font-weight: 500;
+  background: var(--sur2); color: var(--ink);
+  text-align: right; transition: border-color .15s, background .15s;
+  appearance: none;
+}
+.fw select { padding-left: 10px; text-align: left; font-family: 'Noto Sans JP', sans-serif; font-size: 12px; }
+.fw input:focus, .fw select:focus { outline: none; border-color: var(--ink); background: #fff; }
+.fw .pfx { position: absolute; left: 9px; font-size: 11px; color: var(--ink-30); pointer-events: none; font-family: 'DM Mono', monospace; }
+.fw .sfx { position: absolute; right: 9px; font-size: 11px; color: var(--ink-30); pointer-events: none; }
+.fw input.np { padding-left: 10px; }
+
+.goal-fw input { border-color: var(--blu) !important; background: var(--blu-l) !important; }
+.goal-fw .pfx  { color: var(--blu) !important; }
+
+.itype-note { font-size: 10px; border-radius: 6px; padding: 5px 10px; margin-top: 6px; font-weight: 500; line-height: 1.5; }
+.itype-misc { background: var(--amb-l); color: var(--amb); }
+.itype-biz  { background: var(--grn-l); color: var(--grn); }
+
+.det-btn { font-size: 10px; color: var(--ink-60); cursor: pointer; background: none; border: none; text-decoration: underline; text-underline-offset: 2px; margin-top: 10px; display: block; }
+.det-sec { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--bdr); }
+.det-sec.open { display: block; }
+
+/* ════════════════════════════════
+   EMOTION / EMO BOX
+════════════════════════════════ */
+.emo {
+  background: var(--red-l); border: 1px solid var(--red-m); border-left: 3px solid var(--red);
+  border-radius: var(--r-sm); padding: 11px 14px;
+  font-size: 12px; font-weight: 700; color: var(--red); line-height: 1.5; margin-bottom: 10px;
+}
+
+/* ════════════════════════════════
+   HERO BLOCK
+════════════════════════════════ */
+.hero {
+  background: var(--ink); border-radius: var(--r);
+  padding: 20px 18px; margin-bottom: 10px;
+  position: relative; overflow: hidden;
+}
+.hero::after {
+  content: ''; position: absolute; top: -50px; right: -50px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(74,222,128,.06) 0%, transparent 70%);
+  border-radius: 50%; pointer-events: none;
+}
+.hero-eye { font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,.3); text-transform: uppercase; margin-bottom: 4px; }
+.hero-main { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.hero-amount {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(32px,8vw,48px); font-weight: 900; color: #fff; letter-spacing: -2px; line-height: 1;
+}
+.hero-amount-sub { font-size: 10px; color: rgba(255,255,255,.3); margin-top: 4px; }
+.hero-rate-box { text-align: right; }
+.hero-rate { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 600; color: #4ade80; }
+.hero-rate-lbl { font-size: 9px; color: rgba(255,255,255,.3); letter-spacing: 1px; }
+
+/* Goal meter */
+.gm { margin-top: 13px; }
+.gm-row { display: flex; justify-content: space-between; font-size: 9px; color: rgba(255,255,255,.3); margin-bottom: 4px; }
+.gm-track { height: 8px; background: rgba(255,255,255,.1); border-radius: 99px; overflow: hidden; }
+.gm-fill { height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.34,1.2,.64,1); }
+.gm-ok { background: linear-gradient(90deg,#1a8c52,#4ade80); }
+.gm-ng { background: linear-gradient(90deg,#bf3318,#ff6040); }
+.gm-status { font-size: 10px; color: rgba(255,255,255,.35); margin-top: 4px; }
+
+/* ════════════════════════════════
+   KPI ROW
+════════════════════════════════ */
+.kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+.kpi {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--r-sm); padding: 12px; box-shadow: var(--sh);
+  text-align: center;
+}
+.kpi-lbl { font-size: 9px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ink-60); margin-bottom: 5px; }
+.kpi-val { font-family: 'Syne', sans-serif; font-size: clamp(16px,4vw,22px); font-weight: 900; line-height: 1; }
+.kpi-sub { font-size: 9px; color: var(--ink-30); margin-top: 3px; }
+.kpi-val.grn { color: var(--grn); }
+.kpi-val.red { color: var(--red); }
+.kpi-val.blu { color: var(--blu); }
+.kpi-val.amb { color: var(--amb); }
+
+/* ════════════════════════════════
+   COMPARE
+════════════════════════════════ */
+.tag { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 6px; border-radius: 99px; vertical-align: middle; margin-left: 4px; }
+.tag-pre  { background: #ebebeb; color: #555; }
+.tag-post { background: var(--grn-l); color: var(--grn); }
+
+.cmp-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--bdr); }
+.cmp-row:last-of-type { border: none; }
+.cmp-lbl { font-size: 11px; color: var(--ink-60); }
+.cmp-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; }
+.cmp-val.grn { color: var(--grn); }
+
+.diff-box { border-radius: var(--r-sm); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.diff-pos { background: var(--grn-l); }
+.diff-neg { background: var(--red-l); }
+.diff-lbl { font-size: 10px; font-weight: 700; }
+.diff-lbl.p { color: var(--grn); }
+.diff-lbl.n { color: var(--red); }
+.diff-val { font-family: 'Syne', monospace; font-size: 20px; font-weight: 900; }
+.diff-val.p { color: var(--grn); }
+.diff-val.n { color: var(--red); }
+
+/* Opportunity loss */
+.opp { margin-top: 10px; padding: 12px; background: var(--sur2); border: 1px solid var(--bdr); border-radius: var(--r-sm); }
+.opp-hd { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-60); margin-bottom: 8px; }
+.opp-cards { display: flex; gap: 6px; flex-wrap: wrap; }
+.opp-c { flex: 1; min-width: 70px; background: #fff; border: 1px solid var(--red-m); border-radius: 8px; padding: 8px 10px; }
+.opp-c-lbl { font-size: 9px; color: var(--ink-30); margin-bottom: 2px; }
+.opp-c-val { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 900; color: var(--red); }
+.opp-msg { font-size: 10px; color: var(--ink-60); margin-top: 8px; line-height: 1.5; }
+
+/* ════════════════════════════════
+   BREAKDOWN
+════════════════════════════════ */
+.brk { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.bc { background: var(--sur2); border: 1px solid var(--bdr); border-radius: var(--r-sm); padding: 13px; }
+.bc-hd { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-60); margin-bottom: 10px; }
+.br { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.br:last-child { margin: 0; }
+.bn { font-size: 11px; color: var(--ink-60); }
+.bv { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; }
+.bv.r { color: var(--red); } .bv.g { color: var(--grn); }
+.bdv { height: 1px; background: var(--bdr); margin: 6px 0; }
+.btt { font-size: 11px; font-weight: 700; }
+.btv { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700; }
+.btv.r { color: var(--red); } .btv.g { color: var(--grn); }
+
+.tax-rng { display: inline-flex; align-items: center; background: var(--amb-l); border: 1px solid var(--amb-m); border-radius: 4px; padding: 1px 6px; font-size: 9px; font-weight: 700; color: var(--amb); margin-left: 4px; }
+
+/* Rate chips inline */
+.rate-chip { display: inline-flex; align-items: center; font-size: 8px; font-weight: 700; letter-spacing: .3px; background: var(--blu-l); color: var(--blu); border: 1px solid var(--blu-m); border-radius: 4px; padding: 1px 5px; margin-left: 3px; vertical-align: middle; }
+.rate-chip.amber { background: var(--amb-l); color: var(--amb); border-color: var(--amb-m); }
+.rate-chip.grn   { background: var(--grn-l); color: var(--grn); border-color: var(--grn-m); }
+.rate-note { font-size: 8px; color: var(--ink-30); margin-left: 3px; font-weight: 400; white-space: nowrap; }
+
+/* Social insurance explanation panel */
+.soc-panel { margin: 4px 0 2px; background: var(--sur2); border: 1px solid var(--bdr); border-radius: 6px; padding: 7px 9px; }
+.soc-panel-body { font-size: 10px; color: var(--ink-60); line-height: 1.6; }
+.soc-panel-body strong { color: var(--ink); }
+
+/* Rate summary box */
+.rate-summary { margin-top: 8px; background: var(--sur2); border: 1px solid var(--bdr); border-radius: 6px; padding: 7px 9px; }
+.rs-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.rs-row:last-child { margin: 0; }
+.rs-name { font-size: 10px; color: var(--ink-60); }
+.rs-val  { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--ink); }
+.rs-eff  { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--bdr); }
+.rs-eff .rs-name { font-weight: 700; color: var(--ink); }
+.rs-eff .rs-val  { color: var(--red); font-size: 13px; }
+
+/* ════════════════════════════════
+   ALERTS
+════════════════════════════════ */
+.alerts { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+.al { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; line-height: 1.5; border-left: 2.5px solid; animation: fadeup .2s ease; }
+.al-warn   { background: var(--amb-l); border-color: #d4a017; color: #5a3d00; }
+.al-danger { background: var(--red-l); border-color: var(--red); color: #6a1500; }
+.al-info   { background: var(--blu-l); border-color: var(--blu); color: #0a2e5e; }
+.al-good   { background: var(--grn-l); border-color: var(--grn); color: #0a3d1e; }
+.al-icon   { flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+@keyframes fadeup { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:none; } }
+
+/* ════════════════════════════════
+   GRAPH
+════════════════════════════════ */
+.bars { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px,3vw,28px); height: 130px; margin-bottom: 8px; }
+.bc2 { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; max-width: 90px; }
+.bo { width: 100%; max-width: 64px; height: 110px; background: var(--bg2); border-radius: 6px 6px 3px 3px; display: flex; align-items: flex-end; overflow: hidden; }
+.bi { width: 100%; border-radius: 4px 4px 2px 2px; transition: height .5s cubic-bezier(.34,1.2,.64,1); min-height: 3px; }
+.bi-inc  { background: linear-gradient(180deg,#4ade80,#15774a); }
+.bi-tax  { background: linear-gradient(180deg,#ff6040,#bf3318); }
+.bi-take { background: linear-gradient(180deg,#60b4ff,#1348a0); }
+.bgv { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600; text-align: center; }
+.bgn { font-size: 9px; color: var(--ink-60); }
+.rbar { margin-top: 6px; }
+.rbar-lbl { display: flex; justify-content: space-between; font-size: 9px; color: var(--ink-60); margin-bottom: 3px; }
+.rbar-track { height: 6px; background: var(--bdr); border-radius: 99px; overflow: hidden; display: flex; }
+.rbt { background: var(--red); transition: width .4s; }
+.rbk { background: var(--blu); transition: width .4s; }
+
+/* ════════════════════════════════
+   IMPACT GRID
+════════════════════════════════ */
+.imp-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.imp-c { background: var(--sur2); border: 1px solid var(--bdr); border-radius: var(--r-sm); padding: 12px; }
+.imp-lbl { font-size: 9px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ink-60); margin-bottom: 3px; }
+.imp-val { font-family: 'Syne', sans-serif; font-size: clamp(16px,3.5vw,20px); font-weight: 900; }
+.imp-sub { font-size: 9px; color: var(--ink-30); margin-top: 2px; }
+.imp-val.grn { color: var(--grn); } .imp-val.red { color: var(--red); }
+.imp-val.blu { color: var(--blu); } .imp-val.amb { color: var(--amb); }
+
+/* ════════════════════════════════
+   WHAT-IF (節税シミュ)
+════════════════════════════════ */
+.wif { background: linear-gradient(135deg,var(--blu-l),#f0f0ff); border: 1.5px solid var(--blu-m); border-radius: var(--r); padding: 15px; }
+.wif-ttl { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blu); margin-bottom: 11px; }
+.wif-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 11px; }
+.wb { padding: 7px 12px; border: 1.5px solid var(--blu-m); background: #fff; border-radius: 7px; font-size: 11px; font-weight: 700; color: var(--blu); cursor: pointer; transition: all .15s; font-family: 'Noto Sans JP', sans-serif; }
+.wb:hover, .wb.on { background: var(--blu); color: #fff; border-color: var(--blu); }
+.wif-res { background: #fff; border: 1px solid var(--blu-m); border-radius: 9px; padding: 13px; }
+.wfr-lbl { font-size: 10px; font-weight: 700; color: var(--ink-60); margin-bottom: 8px; }
+.wfr-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid var(--bdr); }
+.wfr-row:last-child { margin: 0; padding: 0; border: none; }
+.wfr-name { font-size: 11px; color: var(--ink-60); }
+.wfr-val  { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; }
+.wfr-diff { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 900; color: var(--grn); }
+.wfr-placeholder { font-size: 11px; color: var(--ink-30); text-align: center; padding: 8px; }
+
+/* ════════════════════════════════
+   UNIT PRICE
+════════════════════════════════ */
+.unit-box { background: linear-gradient(135deg,var(--grn-l),#f0fff8); border: 1.5px solid var(--grn-m); border-radius: var(--r); padding: 15px; }
+.unit-ttl { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--grn); margin-bottom: 12px; }
+.unit-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 11px; }
+.unit-c { background: #fff; border-radius: 9px; padding: 12px; }
+.unit-c.min { border: 1px solid var(--red-m); }
+.unit-c.rec { border: 1px solid var(--grn-m); }
+.ubadge { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; margin-bottom: 6px; }
+.ubadge-min { background: var(--red-l); color: var(--red); }
+.ubadge-rec { background: var(--grn-l); color: var(--grn); }
+.unit-val { font-family: 'Syne', sans-serif; font-size: clamp(20px,5vw,26px); font-weight: 900; }
+.unit-val.red { color: var(--red); } .unit-val.grn { color: var(--grn); }
+.unit-sub { font-size: 9px; color: var(--ink-30); margin-top: 3px; }
+.unit-why { font-size: 11px; color: var(--ink-60); line-height: 1.6; border-top: 1px solid var(--grn-m); padding-top: 10px; }
+
+/* ════════════════════════════════
+   ACTION TOOLS (モーダル)
+════════════════════════════════ */
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 10px; }
+.act-card {
+  background: var(--sur); border: 1px solid var(--bdr); border-radius: var(--r);
+  padding: 14px; cursor: pointer; transition: all .18s; box-shadow: var(--sh);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.act-card:hover { border-color: var(--blu); box-shadow: 0 4px 20px rgba(19,72,160,.1); transform: translateY(-1px); }
+.act-icon { font-size: 20px; }
+.act-name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800; color: var(--ink); }
+.act-desc { font-size: 10px; color: var(--ink-60); line-height: 1.4; }
+.act-badge { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: var(--blu-l); color: var(--blu); align-self: flex-start; }
+
+/* ════════════════════════════════
+   MODAL
+════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(12,10,8,.55);
+  z-index: 300; display: none; align-items: center; justify-content: center; padding: 16px;
+  backdrop-filter: blur(3px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--sur); border-radius: var(--r); padding: 0;
+  max-width: 540px; width: 100%; max-height: 88vh; overflow-y: auto;
+  box-shadow: 0 16px 60px rgba(0,0,0,.25);
+  animation: popIn .22s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from { opacity:0; transform:scale(.94) translateY(12px); } to { opacity:1; transform:none; } }
+.modal-hdr { padding: 16px 18px 12px; border-bottom: 1px solid var(--bdr); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; }
+.modal-close { background: none; border: none; font-size: 20px; color: var(--ink-60); cursor: pointer; padding: 0 4px; line-height: 1; }
+.modal-body { padding: 16px 18px 20px; }
+
+/* ─ Negotiation Template ─ */
+.tmpl-area {
+  width: 100%; padding: 12px; border: 1.5px solid var(--bdr); border-radius: 8px;
+  font-size: 12px; font-family: 'Noto Sans JP', sans-serif; line-height: 1.7;
+  background: var(--sur2); color: var(--ink); resize: vertical; min-height: 220px;
+}
+.copy-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; margin-top: 9px; padding: 10px;
+  background: var(--ink); color: #fff; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer; transition: background .15s;
+}
+.copy-btn:hover { background: #2a2420; }
+.copy-btn.copied { background: var(--grn); }
+
+/* ─ Expense Checklist ─ */
+.exp-section { margin-bottom: 14px; }
+.exp-section-ttl { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ink-60); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--bdr); }
+.exp-item { display: flex; align-items: flex-start; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(--bdr); }
+.exp-item:last-child { border: none; }
+.exp-cb { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; accent-color: var(--grn); cursor: pointer; }
+.exp-info {}
+.exp-name { font-size: 12px; font-weight: 500; margin-bottom: 1px; }
+.exp-desc { font-size: 10px; color: var(--ink-60); line-height: 1.4; }
+.exp-count { font-size: 11px; color: var(--grn); font-weight: 700; margin-top: 4px; }
+
+/* ─ iDeCo シミュ ─ */
+.ideco-form { display: flex; flex-direction: column; gap: 11px; margin-bottom: 14px; }
+.ideco-lbl { font-size: 10px; font-weight: 700; color: var(--ink-60); margin-bottom: 4px; letter-spacing: .5px; }
+.ideco-res { background: var(--grn-l); border: 1px solid var(--grn-m); border-radius: 9px; padding: 13px; }
+.ideco-res-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--grn-m); }
+.ideco-res-row:last-child { margin: 0; padding: 0; border: none; }
+.ideco-res-lbl { font-size: 11px; color: var(--grn); }
+.ideco-res-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 900; color: var(--grn); }
+
+/* ─ 法人化判定 ─ */
+.houjin-meter { margin: 14px 0; }
+.hm-bar { height: 12px; background: var(--bdr); border-radius: 99px; overflow: hidden; margin: 5px 0; }
+.hm-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.34,1.2,.64,1); }
+.hm-lbl { display: flex; justify-content: space-between; font-size: 9px; color: var(--ink-60); }
+.houjin-verdict { border-radius: 9px; padding: 12px 14px; font-size: 12px; font-weight: 700; line-height: 1.5; }
+.hv-go      { background: var(--grn-l); color: var(--grn); }
+.hv-maybe   { background: var(--amb-l); color: var(--amb); }
+.hv-not-yet { background: var(--blu-l); color: var(--blu); }
+.houjin-points { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+.hp { display: flex; gap: 8px; align-items: flex-start; font-size: 11px; line-height: 1.5; }
+
+/* ════════════════════════════════
+   EDUCATION
+════════════════════════════════ */
+.edu-item { padding-left: 13px; border-left: 2px solid var(--bdr); margin-bottom: 13px; }
+.edu-item:last-child { margin: 0; }
+.edu-q { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.edu-a { font-size: 11px; color: var(--ink-60); line-height: 1.65; }
+.edu-a strong { color: var(--ink); font-weight: 700; }
+
+/* ════════════════════════════════
+   FOOTNOTE
+════════════════════════════════ */
+.fn { font-size: 9px; color: var(--ink-30); text-align: center; margin-top: 8px; line-height: 1.75; }
+.fn strong { color: var(--amb); }
+
+/* ════════════════════════════════
+   PERSISTENCE / HISTORY
+════════════════════════════════ */
+
+/* Save banner */
+.save-banner {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  background: var(--grn-l); border: 1px solid var(--grn-m); border-radius: var(--r-sm);
+  padding: 9px 13px; margin-bottom: 10px; font-size: 11px; color: var(--grn);
+  animation: fadeup .3s ease;
+}
+.save-banner strong { font-weight: 700; }
+.save-banner-btns { display: flex; gap: 6px; }
+.sbtn {
+  padding: 5px 11px; border-radius: 6px; font-size: 11px; font-weight: 700;
+  border: 1.5px solid; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all .15s;
+}
+.sbtn-primary { background: var(--grn); color: #fff; border-color: var(--grn); }
+.sbtn-secondary { background: transparent; color: var(--grn); border-color: var(--grn-m); }
+.sbtn-primary:hover { background: #0f6038; }
+.sbtn-secondary:hover { background: var(--grn-l); }
+
+/* Restore toast */
+.restore-toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; border-radius: 10px;
+  padding: 11px 18px; font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25); z-index: 400;
+  white-space: nowrap;
+  animation: toastIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+.restore-toast.hide { animation: toastOut .25s ease forwards; }
+@keyframes toastIn  { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+@keyframes toastOut { from { opacity:1; transform:translateX(-50%) translateY(0); } to { opacity:0; transform:translateX(-50%) translateY(10px); } }
+.toast-btn { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2); color: #fff; border-radius: 5px; padding: 3px 9px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
+
+/* History section */
+.hist-empty { text-align: center; padding: 20px; font-size: 12px; color: var(--ink-30); }
+.hist-list { display: flex; flex-direction: column; gap: 8px; }
+.hist-item {
+  background: var(--sur2); border: 1.5px solid var(--bdr); border-radius: var(--r-sm);
+  padding: 12px 14px; cursor: pointer; transition: all .15s;
+  position: relative;
+}
+.hist-item:hover { border-color: var(--blu); background: var(--blu-l); }
+.hist-item.active-hist { border-color: var(--grn); background: var(--grn-l); }
+.hist-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; }
+.hist-date { font-size: 10px; color: var(--ink-30); font-family: 'DM Mono', monospace; }
+.hist-label { font-size: 11px; font-weight: 700; color: var(--ink); }
+.hist-del { background: none; border: none; color: var(--ink-30); cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1; }
+.hist-del:hover { color: var(--red); }
+.hist-metrics { display: flex; gap: 8px; flex-wrap: wrap; }
+.hist-m { font-size: 10px; background: var(--sur); border: 1px solid var(--bdr); border-radius: 5px; padding: 3px 8px; }
+.hist-m span { font-family: 'DM Mono', monospace; font-weight: 600; }
+
+/* Delta badges */
+.delta-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 12px; background: var(--sur2); border: 1px solid var(--bdr);
+  border-radius: var(--r-sm); margin-top: 8px; font-size: 11px;
+}
+.delta-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+}
+.delta-up   { background: var(--grn-l); color: var(--grn); }
+.delta-down { background: var(--red-l); color: var(--red); }
+.delta-flat { background: #f0f0f0; color: #555; }
+.delta-lbl  { font-size: 10px; color: var(--ink-60); }
+
+/* Monthly review button (sticky bottom) */
+.review-fab {
+  position: fixed; bottom: 20px; right: 16px; z-index: 150;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--ink); color: #fff;
+  padding: 11px 18px; border-radius: 99px;
+  font-size: 12px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,.22);
+  transition: all .2s;
+}
+.review-fab:hover { background: #2a2420; transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,0,0,.28); }
+.review-fab-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #4ade80;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.6;transform:scale(1.3);} }
+
+@media (max-width: 520px) {
+  .ig  { grid-template-columns: 1fr; }
+  .ig-full { grid-column: 1; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .brk { grid-template-columns: 1fr; }
+  .imp-g { grid-template-columns: 1fr; }
+  .unit-g { grid-template-columns: 1fr; }
+  .action-grid { grid-template-columns: 1fr; }
+  .hero-main { flex-direction: column; align-items: flex-start; }
+  .hero-rate-box { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─ HEADER ─ -->
+<div class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-brand">
+      <div class="hdr-logo">🧠</div>
+      <div>
+        <div class="hdr-title">副業意思決定OS</div>
+        <div class="hdr-sub">Freelance Decision Engine</div>
+      </div>
+    </div>
+    <div class="hdr-badge">v6 · 税務信頼性強化版</div>
+  </div>
+</div>
+<div class="utype-wrap">
+  <div class="utype">
+    <button class="ut on" onclick="setUT('company')">👔 会社員</button>
+    <button class="ut"    onclick="setUT('freelance')">💻 フリーランス</button>
+    <button class="ut"    onclick="setUT('beginner')">🌱 副業初心者</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  <span>⚠️</span>
+  <span>本ツールは実務ロジックに基づく概算シミュレーションです（<strong>±10〜20%の誤差</strong>あり）。正確な税額は<strong>税理士または税務署・自治体</strong>にご確認ください。住民税は自治体により異なります。副業の所得区分（雑所得 / 事業所得）は状況により税務署の判断が異なります。</span>
+</div>
+
+<!-- ═══ ① 判定結果（最上部）═══ -->
+<div class="sec-lbl">① 判定結果</div>
+
+<div class="vt vt-caution" id="verdict-block">
+  <div class="vt-head" id="vt-head">
+    <div class="vt-icon" id="v-icon">🟡</div>
+    <div>
+      <div class="vt-eye">自分基準の判定（目標時給ベース）</div>
+      <div class="vt-ttl" id="v-title">この副業は「もう少しで黒字」—— 改善余地あり</div>
+    </div>
+  </div>
+  <div class="vt-body" id="v-body">
+    <div class="vt-r"><span class="vt-ri">📊</span><span>実質時給 ¥1,200/h は目標の80%。あと一歩。</span></div>
+    <div class="vt-r"><span class="vt-ri">🎯</span><span>単価を ¥1,875/h に引き上げると目標達成できます。</span></div>
+  </div>
+</div>
+
+<!-- ═══ ② 入力 ═══ -->
+<div class="sec-lbl">② 入力</div>
+
+<div class="card">
+  <div class="mode-sw">
+    <button class="sw-btn on" id="btn-m" onclick="setMode('month')">月額入力</button>
+    <button class="sw-btn"    id="btn-y" onclick="setMode('year')">年額入力</button>
+  </div>
+  <div class="ig" style="margin-bottom:10px;">
+    <div>
+      <div class="fl"><span id="lbl-main">本業 月収</span></div>
+      <div class="fw"><span class="pfx">¥</span>
+        <input type="number" id="main-income" value="350000" min="0" step="1000" inputmode="numeric"/>
+      </div>
+    </div>
+    <div>
+      <div class="fl"><span id="lbl-side">副業 月収</span> <span class="fl-note">税引前</span></div>
+      <div class="fw"><span class="pfx">¥</span>
+        <input type="number" id="side-income" value="80000" min="0" step="1000" inputmode="numeric"/>
+      </div>
+    </div>
+    <div>
+      <div class="fl"><span id="lbl-exp">副業 月経費</span> <span class="fl-note">税引前</span></div>
+      <div class="fw"><span class="pfx">¥</span>
+        <input type="number" id="expenses" value="15000" min="0" step="1000" inputmode="numeric"/>
+      </div>
+    </div>
+    <div>
+      <div class="fl">月稼働時間</div>
+      <div class="fw"><input type="number" id="hours" value="20" min="0" step="1" inputmode="numeric" class="np"/><span class="sfx">h</span></div>
+    </div>
+    <div class="ig-full goal-fw">
+      <div class="fl" style="color:var(--blu)">🎯 目標時給 <span class="fl-note" style="color:var(--blu);opacity:.8">— 判定の基準</span></div>
+      <div class="fw"><span class="pfx" style="color:var(--blu)">¥</span>
+        <input type="number" id="goal-jikyu" value="1500" min="0" step="100" inputmode="numeric"/>
+      </div>
+    </div>
+    <div class="ig-full">
+      <div class="fl">副業の種類 <span class="fl-note">— 経費・控除の扱いが変わります</span></div>
+      <div class="fw">
+        <select id="income-type" onchange="onItypeChange()">
+          <option value="misc">雑所得（YouTube・アフィリ・クラウドソーシング単発など）</option>
+          <option value="biz">事業所得（Web制作・デザイン・継続案件・フリーランス業務など）</option>
+        </select>
+      </div>
+      <div class="itype-note itype-misc" id="itype-note">
+        📌 雑所得：経費は差し引けますが、青色申告特別控除（最大65万円）は使えません。損失の損益通算も不可。確定申告ソフトでの管理がおすすめです。
+      </div>
+    </div>
+  </div>
+  <button class="det-btn" id="det-btn" onclick="toggleDet()">▸ 詳細設定（社会保険・iDeCo）</button>
+  <div class="det-sec" id="det-sec">
+    <!-- 社会保険の説明（ユーザータイプ別）-->
+    <div id="soc-explain" style="margin-bottom:10px;padding:9px 11px;border-radius:7px;font-size:11px;line-height:1.6;"></div>
+    <div class="ig">
+      <div>
+        <div class="fl">社会保険料 <span class="fl-note">（月額・参考値）</span></div>
+        <div class="fw"><span class="pfx">¥</span>
+          <input type="number" id="social" value="0" min="0" step="1000" inputmode="numeric"/>
+        </div>
+        <div style="font-size:9px;color:var(--blu);margin-top:3px;" id="soc-auto-lbl">自動推定を使用中</div>
+      </div>
+      <div>
+        <div class="fl">iDeCo等 追加控除 <span class="fl-note">（月）</span></div>
+        <div class="fw"><span class="pfx">¥</span>
+          <input type="number" id="ideco" value="0" min="0" step="1000" inputmode="numeric"/>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ③ 結果 ═══ -->
+<div class="sec-lbl">③ 結果</div>
+
+<div class="emo" id="emo-box">月 ¥80,000（税引前）稼いでも → 税負担増は月 <strong>約¥24,000</strong>（副業収入の<strong>30%</strong>）です</div>
+
+<div class="hero">
+  <div class="hero-eye">副業しても実際これしか残りません（税引後）</div>
+  <div class="hero-main">
+    <div>
+      <div class="hero-amount syne mono" id="hero-amount">¥3,716,000</div>
+      <div class="hero-amount-sub">年間手取り（副業込み・税引後）</div>
+    </div>
+    <div class="hero-rate-box">
+      <div class="hero-rate" id="hero-rate">79.8%</div>
+      <div class="hero-rate-lbl">手取り率</div>
+    </div>
+  </div>
+  <div class="gm">
+    <div class="gm-row">
+      <span id="gm-a">実質時給 ¥1,200/h（税引後）</span>
+      <span id="gm-g">目標 ¥1,500/h</span>
+    </div>
+    <div class="gm-track"><div class="gm-fill gm-ng" id="gm-fill" style="width:80%"></div></div>
+    <div class="gm-status" id="gm-st">⚠️ 目標の80%。単価 +¥375 で達成できます。</div>
+  </div>
+</div>
+
+<!-- KPI Row -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-lbl">副業で増えた手取り<br><span class="tag tag-post">税引後</span></div>
+    <div class="kpi-val grn" id="kpi-diff">¥462,000</div>
+    <div class="kpi-sub">年間</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">実質時給<br><span class="tag tag-post">税引後</span></div>
+    <div class="kpi-val blu" id="kpi-jikyu">¥1,925</div>
+    <div class="kpi-sub">経費・税引き後</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">副業の税負担率</div>
+    <div class="kpi-val red" id="kpi-taxrate">29%</div>
+    <div class="kpi-sub">副業収入から消える割合</div>
+  </div>
+</div>
+
+<!-- Compare -->
+<div class="card">
+  <div class="card-ttl">副業あり vs なし — 比較</div>
+  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;font-size:10px;color:var(--ink-60);">
+    <span class="tag tag-pre">税引前</span> 入力値　<span class="tag tag-post">税引後</span> 税・社保引き後の実際の手取り
+  </div>
+  <div class="cmp-row"><span class="cmp-lbl">本業年収 <span class="tag tag-pre">税引前</span></span><span class="cmp-val" id="c-main-gross">¥4,200,000</span></div>
+  <div class="cmp-row"><span class="cmp-lbl">副業なし 手取り <span class="tag tag-post">税引後</span></span><span class="cmp-val grn" id="c-without">¥3,254,000</span></div>
+  <div class="cmp-row"><span class="cmp-lbl">副業収入 年間 <span class="tag tag-pre">税引前</span></span><span class="cmp-val" id="c-gross-side">¥960,000</span></div>
+  <div class="cmp-row"><span class="cmp-lbl">副業あり 手取り <span class="tag tag-post">税引後</span></span><span class="cmp-val grn" id="c-with">¥3,716,000</span></div>
+  <div class="cmp-row"><span class="cmp-lbl">実際に増えた手取り <span class="tag tag-post">税引後</span></span><span class="cmp-val grn" id="c-gain">+¥462,000</span></div>
+  <div class="diff-box diff-pos" id="diff-box">
+    <span class="diff-lbl p" id="diff-lbl">副業で増えた手取り（年）</span>
+    <span class="diff-val p syne" id="diff-val">+¥462,000</span>
+  </div>
+  <div class="opp">
+    <div class="opp-hd">やらなかった場合の機会損失（税引後）</div>
+    <div class="opp-cards">
+      <div class="opp-c"><div class="opp-c-lbl">3年</div><div class="opp-c-val" id="opp-3y">¥1,386,000</div></div>
+      <div class="opp-c"><div class="opp-c-lbl">5年</div><div class="opp-c-val" id="opp-5y">¥2,310,000</div></div>
+      <div class="opp-c"><div class="opp-c-lbl">10年</div><div class="opp-c-val" id="opp-10y">¥4,620,000</div></div>
+    </div>
+    <div class="opp-msg" id="opp-msg">副業をやらないことで年¥462,000の手取りを失い続けます。</div>
+  </div>
+</div>
+
+<!-- Breakdown -->
+<div class="brk">
+  <div class="bc">
+    <div class="bc-hd">💰 収入・控除（年）</div>
+    <div class="br"><span class="bn">本業年収<span class="tag tag-pre" style="margin-left:4px">前</span></span><span class="bv g" id="b-main">¥4,200,000</span></div>
+    <div class="br"><span class="bn">副業純利益<span class="tag tag-pre" style="margin-left:4px">前</span></span><span class="bv g" id="b-sidenet">¥780,000</span></div>
+    <div class="br"><span class="bn">給与所得控除</span><span class="bv r" id="b-saldec">-¥726,000</span></div>
+    <div class="br"><span class="bn">基礎控除</span><span class="bv r">-¥480,000</span></div>
+    <div class="br"><span class="bn">iDeCo等</span><span class="bv r" id="b-ideco">¥0</span></div>
+    <div class="bdv"></div>
+    <div class="br"><span class="btt">課税所得</span><span class="btv" id="b-taxable">¥2,774,000</span></div>
+  </div>
+  <div class="bc">
+    <div class="bc-hd">🧾 税金内訳（年）</div>
+    <!-- 所得税 行 -->
+    <div class="br">
+      <span class="bn">
+        所得税
+        <span class="rate-chip" id="b-itax-rate">税率5%</span>
+        <span class="rate-note">※復興税2.1%込</span>
+      </span>
+      <span class="bv r" id="b-itax">-¥127,000</span>
+    </div>
+    <!-- 住民税 行 -->
+    <div class="br">
+      <span class="bn">
+        住民税
+        <span class="rate-chip amber">概算10%</span>
+        <span class="rate-note">※自治体差あり9〜11%</span>
+      </span>
+      <span class="bv r" id="b-rtax">-¥282,900</span>
+    </div>
+    <!-- 社会保険 行（ユーザータイプ別説明付き）-->
+    <div class="br">
+      <span class="bn">
+        社会保険料
+        <span class="rate-note" id="b-soc-note">※会社員は副業影響なし</span>
+      </span>
+      <span class="bv r" id="b-social">-¥604,100</span>
+    </div>
+    <!-- 社会保険の補足パネル（折りたたみ）-->
+    <div class="soc-panel" id="soc-panel">
+      <div class="soc-panel-body" id="soc-panel-body">読み込み中...</div>
+    </div>
+    <div class="bdv"></div>
+    <div class="br"><span class="btt">税負担計</span><span class="btv r" id="b-taxtotal">-¥1,014,000</span></div>
+    <!-- 税率内訳サマリー -->
+    <div class="rate-summary" id="rate-summary">
+      <div class="rs-row"><span class="rs-name">所得税率（課税所得ベース）</span><span class="rs-val" id="rs-itax">5%</span></div>
+      <div class="rs-row"><span class="rs-name">住民税率（概算）</span><span class="rs-val">約10%</span></div>
+      <div class="rs-row"><span class="rs-name">合計税率（限界）</span><span class="rs-val" id="rs-total">約15%</span></div>
+      <div class="rs-row rs-eff"><span class="rs-name">実効税率（総収入比）</span><span class="rs-val" id="b-effrate">20.3%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ④ 分析 ═══ -->
+<div class="sec-lbl">④ 分析</div>
+
+<div class="alerts" id="alerts">
+  <div class="al al-warn"><span class="al-icon">⚠️</span><span>副業所得（収入-経費）が20万円超のため<strong>確定申告が必要</strong>です。住民税申告は金額に関わらず別途必要です。</span></div>
+</div>
+
+<div class="card">
+  <div class="card-ttl">収入（税引前）/ 税負担 / 手取り（税引後）</div>
+  <div class="bars">
+    <div class="bc2"><div class="bgv" style="color:var(--grn);" id="gv-inc">¥5,160,000</div>
+      <div class="bo"><div class="bi bi-inc" id="gb-inc" style="height:72%"></div></div>
+      <div class="bgn">総収入<br><span style="font-size:8px;">（税引前）</span></div></div>
+    <div class="bc2"><div class="bgv" style="color:var(--red);" id="gv-tax">-¥1,014,000</div>
+      <div class="bo"><div class="bi bi-tax" id="gb-tax" style="height:20%"></div></div>
+      <div class="bgn">税・保険</div></div>
+    <div class="bc2"><div class="bgv" style="color:var(--blu);" id="gv-take">¥3,716,000</div>
+      <div class="bo"><div class="bi bi-take" id="gb-take" style="height:52%"></div></div>
+      <div class="bgn">手取り<br><span style="font-size:8px;">（税引後）</span></div></div>
+  </div>
+  <div class="rbar">
+    <div class="rbar-lbl"><span>税負担率 <span id="rbt-p">19.7%</span></span><span>手取り率 <span id="rbk-p">72%</span></span></div>
+    <div class="rbar-track"><div class="rbt" id="rbt" style="width:19.7%"></div><div class="rbk" id="rbk" style="width:72%"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-ttl">⏱️ 時給・長期インパクト</div>
+  <div class="imp-g">
+    <div class="imp-c"><div class="imp-lbl">実質時給（税引後）</div>
+      <div class="imp-val blu" id="imp-jikyu">¥1,925/h</div>
+      <div class="imp-sub">経費・税引き後の実態</div></div>
+    <div class="imp-c"><div class="imp-lbl">目標達成率</div>
+      <div class="imp-val grn" id="imp-goal">128%</div>
+      <div class="imp-sub" id="imp-goal-sub">目標¥1,500/h 対比</div></div>
+    <div class="imp-c"><div class="imp-lbl">副業の税負担率</div>
+      <div class="imp-val red" id="imp-txrate">29%</div>
+      <div class="imp-sub">副業収入から税で消える割合</div></div>
+    <div class="imp-c"><div class="imp-lbl">損益分岐点時給</div>
+      <div class="imp-val amb" id="imp-bep">¥875/h</div>
+      <div class="imp-sub">これ以上なら経費回収できる</div></div>
+  </div>
+</div>
+
+<!-- ═══ ⑤ 節税シミュ ═══ -->
+<div class="sec-lbl">⑤ 節税シミュレーション</div>
+
+<div class="wif">
+  <div class="wif-ttl">💡 こうしたら手取りはどう変わる？</div>
+  <div class="wif-btns">
+    <button class="wb" onclick="runWhatif('ideco2',this)">iDeCo 月2万</button>
+    <button class="wb" onclick="runWhatif('ideco5',this)">iDeCo 月5万</button>
+    <button class="wb" onclick="runWhatif('exp1',this)">経費 +1万/月</button>
+    <button class="wb" onclick="runWhatif('exp3',this)">経費 +3万/月</button>
+    <button class="wb" onclick="runWhatif('price120',this)">単価 +20%</button>
+    <button class="wb" onclick="runWhatif('price150',this)">単価 +50%</button>
+    <button class="wb" onclick="runWhatif(null,this)">リセット</button>
+  </div>
+  <div class="wif-res" id="wif-res">
+    <div class="wfr-placeholder">シナリオを選ぶと「もし〇〇したら」の結果が出ます</div>
+  </div>
+</div>
+
+<!-- ═══ ⑥ 単価逆算 ═══ -->
+<div class="sec-lbl">⑥ 単価逆算</div>
+
+<div class="unit-box">
+  <div class="unit-ttl">🎯 目標時給から逆算した単価</div>
+  <div class="unit-g">
+    <div class="unit-c min">
+      <div class="ubadge ubadge-min">最低ライン</div>
+      <div class="unit-val red" id="u-min">¥875/h</div>
+      <div class="unit-sub" id="u-min-sub">経費・税増分を回収できる最低単価</div>
+    </div>
+    <div class="unit-c rec">
+      <div class="ubadge ubadge-rec">推奨単価</div>
+      <div class="unit-val grn" id="u-rec">¥1,875/h</div>
+      <div class="unit-sub" id="u-rec-sub">目標時給¥1,500/hを達成できる単価</div>
+    </div>
+  </div>
+  <div class="unit-why" id="unit-why">副業収入・稼働時間を入力すると根拠が表示されます。</div>
+</div>
+
+<!-- ═══ ⑦ 行動ツール ═══ -->
+<div class="sec-lbl">⑦ 行動ツール — 今すぐ使える</div>
+
+<div class="action-grid">
+  <div class="act-card" onclick="openModal('modal-nego')">
+    <div class="act-icon">📝</div>
+    <div class="act-name">単価交渉テンプレ</div>
+    <div class="act-desc">推奨単価をベースに交渉文を自動生成。コピーしてすぐ送れます。</div>
+    <div class="act-badge">即使える</div>
+  </div>
+  <div class="act-card" onclick="openModal('modal-exp')">
+    <div class="act-icon">🧾</div>
+    <div class="act-name">経費チェックリスト</div>
+    <div class="act-desc">副業タイプ別の経費一覧。チェックして計上漏れをなくす。</div>
+    <div class="act-badge">即使える</div>
+  </div>
+  <div class="act-card" onclick="openModal('modal-ideco')">
+    <div class="act-icon">💰</div>
+    <div class="act-name">iDeCo節税シミュ</div>
+    <div class="act-desc">掛金を入力すると節税額・手取り増を即計算します。</div>
+    <div class="act-badge">即使える</div>
+  </div>
+  <div class="act-card" onclick="openModal('modal-houjin')">
+    <div class="act-icon">🏢</div>
+    <div class="act-name">法人化タイミング判定</div>
+    <div class="act-desc">収入・利益ベースで「今すぐ／検討中／まだ早い」を判定。</div>
+    <div class="act-badge">即使える</div>
+  </div>
+</div>
+
+<!-- ═══ ⑧ なぜそうなるか ═══ -->
+<div class="sec-lbl">⑧ なぜそうなるか</div>
+<div class="card">
+  <div class="edu-item"><div class="edu-q" id="eq1">なぜ副業の手取りは想像より少ないのか？</div><div class="edu-a" id="ea1">読み込み中...</div></div>
+  <div class="edu-item" style="margin-top:12px"><div class="edu-q">住民税がなぜ概算なのか？</div><div class="edu-a">住民税は<strong>都道府県民税＋市区町村民税</strong>の合計です。標準税率は10%ですが、均等割（約5,000円/年）・調整控除・自治体ごとの超過課税（東京都など）により<strong>実際は9〜11%相当のケースが多い</strong>です。このツールでは10%+均等割で概算し、レンジを明示しています。</div></div>
+  <div class="edu-item" style="margin-top:12px"><div class="edu-q" id="eq3">雑所得と事業所得の違いは？</div><div class="edu-a" id="ea3">読み込み中...</div></div>
+  <div class="edu-item" style="margin-top:12px"><div class="edu-q">どうすれば手取りを増やせるか？</div><div class="edu-a" id="ea4">読み込み中...</div></div>
+</div>
+
+<p class="fn">
+  ※ 所得税は累進課税（5〜45%）＋復興特別所得税2.1%。住民税は概算（均等割・調整控除未反映）。<br>
+  ※ 社会保険料は標準報酬月額等級制（健保+厚年、協会けんぽ東京）を概算。フリーランスは国保+国民年金で別計算。<br>
+  ※ <strong>副業が雑所得か事業所得かは税務署の判断によります。</strong>本ツールの計算は選択した区分に基づく概算です。
+</p>
+
+<!-- ═══ ⑨ シミュレーション履歴 ═══ -->
+<div class="sec-lbl">⑨ 履歴・変化トラッキング</div>
+
+<!-- 保存バナー（計算後に表示）-->
+<div class="save-banner" id="save-banner" style="display:none;">
+  <div>
+    <strong>📸 このシミュレーションを保存しますか？</strong><br>
+    <span style="font-size:10px;opacity:.8;">保存すると次回「前回との比較」ができます</span>
+  </div>
+  <div class="save-banner-btns">
+    <button class="sbtn sbtn-primary" onclick="saveSnapshot()">保存する</button>
+    <button class="sbtn sbtn-secondary" onclick="dismissSaveBanner()">あとで</button>
+  </div>
+</div>
+
+<!-- 前回との比較デルタ -->
+<div id="delta-block" style="display:none;"></div>
+
+<!-- 履歴カード -->
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <div class="card-ttl" style="margin:0;">過去のシミュレーション（最大5件）</div>
+    <button class="sbtn sbtn-secondary" style="font-size:10px;padding:4px 9px;" onclick="clearAllHistory()">全削除</button>
+  </div>
+  <div id="hist-list-wrap">
+    <div class="hist-empty">まだ保存されたシミュレーションがありません。<br>「保存する」ボタンで記録を始めましょう。</div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- 月次見直しFAB -->
+<button class="review-fab" id="review-fab" onclick="startMonthlyReview()" title="今月の状況に更新する">
+  <div class="review-fab-dot"></div>
+  今月も見直す
+</button>
+
+<!-- ══════════════════════════════════════
+     MODALS
+══════════════════════════════════════ -->
+
+<!-- 単価交渉テンプレ -->
+<div class="modal-overlay" id="modal-nego">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">📝 単価交渉テンプレート</div>
+      <button class="modal-close" onclick="closeModal('modal-nego')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--ink-60);margin-bottom:10px;line-height:1.6;">現在の数値をベースに自動生成しました。<br>赤字部分を編集してご使用ください。</p>
+      <textarea class="tmpl-area" id="nego-tmpl" readonly></textarea>
+      <button class="copy-btn" id="nego-copy-btn" onclick="copyTmpl()">📋 コピーする</button>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--amb-l);border-radius:8px;font-size:11px;color:var(--amb);line-height:1.5;">
+        <strong>ポイント：</strong>単価交渉は「値上げのお願い」ではなく「提供価値の再確認」として伝えるのが効果的です。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 経費チェックリスト -->
+<div class="modal-overlay" id="modal-exp">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">🧾 経費チェックリスト</div>
+      <button class="modal-close" onclick="closeModal('modal-exp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--ink-60);margin-bottom:12px;line-height:1.6;">チェックした項目は「計上できる経費」の候補です。<br>実際の計上は税理士にご確認ください。</p>
+      <div class="exp-count" id="exp-count">0 / 0 項目チェック済み</div>
+      <div id="exp-list" style="margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- iDeCo節税シミュ -->
+<div class="modal-overlay" id="modal-ideco">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">💰 iDeCo節税シミュレーター</div>
+      <button class="modal-close" onclick="closeModal('modal-ideco')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--ink-60);margin-bottom:12px;line-height:1.6;">iDeCoの掛金は全額所得控除になります。<br>現在の税率から節税額を計算します。</p>
+      <div class="ideco-form">
+        <div>
+          <div class="ideco-lbl">月の掛金（会社員は最大2.3万円）</div>
+          <div class="fw"><span class="pfx">¥</span>
+            <input type="number" id="ideco-sim" value="20000" min="0" max="68000" step="1000" inputmode="numeric" oninput="calcIdeco()"/>
+          </div>
+        </div>
+        <div>
+          <div class="ideco-lbl">運用年数</div>
+          <div class="fw">
+            <input type="number" id="ideco-years" value="20" min="1" max="40" step="1" inputmode="numeric" class="np" oninput="calcIdeco()"/>
+            <span class="sfx">年</span>
+          </div>
+        </div>
+      </div>
+      <div class="ideco-res" id="ideco-result">
+        <div class="ideco-res-row"><span class="ideco-res-lbl">年間節税額</span><span class="ideco-res-val" id="id-yr-tax">¥0</span></div>
+        <div class="ideco-res-row"><span class="ideco-res-lbl">月の手取り増加</span><span class="ideco-res-val" id="id-mo-inc">¥0</span></div>
+        <div class="ideco-res-row"><span class="ideco-res-lbl">累計節税額（運用期間）</span><span class="ideco-res-val" id="id-total">¥0</span></div>
+        <div class="ideco-res-row"><span class="ideco-res-lbl">累計掛金（参考）</span><span class="ideco-res-val" id="id-invest">¥0</span></div>
+      </div>
+      <p style="font-size:10px;color:var(--ink-30);margin-top:8px;line-height:1.5;">※ 運用益・受取時の税金は含まれません。節税額は現在の課税所得に基づく概算です。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 法人化タイミング判定 -->
+<div class="modal-overlay" id="modal-houjin">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">🏢 法人化タイミング判定</div>
+      <button class="modal-close" onclick="closeModal('modal-houjin')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--ink-60);margin-bottom:12px;line-height:1.6;">副業・フリーランス収入ベースで法人化の適切なタイミングを判定します。</p>
+      <div class="ig" style="margin-bottom:12px;">
+        <div>
+          <div class="ideco-lbl">事業年収（副業含む）</div>
+          <div class="fw"><span class="pfx">¥</span>
+            <input type="number" id="hj-income" value="0" min="0" step="100000" inputmode="numeric" oninput="calcHoujin()"/>
+          </div>
+        </div>
+        <div>
+          <div class="ideco-lbl">事業利益（売上-経費）</div>
+          <div class="fw"><span class="pfx">¥</span>
+            <input type="number" id="hj-profit" value="0" min="0" step="100000" inputmode="numeric" oninput="calcHoujin()"/>
+          </div>
+        </div>
+      </div>
+      <div class="houjin-meter">
+        <div class="hm-lbl"><span>個人の方が有利</span><span>法人の方が有利</span></div>
+        <div class="hm-bar"><div class="hm-fill" id="hm-fill" style="width:0%;background:linear-gradient(90deg,var(--blu),var(--grn))"></div></div>
+        <div style="font-size:10px;color:var(--ink-60);margin-top:3px;" id="hm-score-lbl">収入・利益を入力してください</div>
+      </div>
+      <div class="houjin-verdict hv-not-yet" id="hj-verdict">収入・利益を入力してください</div>
+      <div class="houjin-points" id="hj-points"></div>
+      <p style="font-size:10px;color:var(--ink-30);margin-top:12px;line-height:1.5;">※ 法人化の判断は事業形態・将来計画によって異なります。必ず税理士にご相談ください。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ──────── STATE ──────── */
+let mode = 'month';
+let userType = 'company';
+let S = {}; // last calc snapshot
+
+/* ──────── UTILS ──────── */
+const $ = id => document.getElementById(id);
+const fmt  = n => '¥' + Math.max(0,Math.round(n)).toLocaleString('ja-JP');
+const fmtS = n => (n>=0?'+¥':'-¥') + Math.abs(Math.round(n)).toLocaleString('ja-JP');
+const set  = (id,v) => { const e=$(id); if(e) e.textContent=v; };
+const setW = (id,w) => { const e=$(id); if(e) e.style.width=Math.max(0,Math.min(100,w))+'%'; };
+const setH = (id,h) => { const e=$(id); if(e) e.style.height=Math.max(0,Math.min(100,h))+'%'; };
+const html = (id,v) => { const e=$(id); if(e) e.innerHTML=v; };
+
+/* ──────── TAX FUNCTIONS ──────── */
+function salDed(y) {
+  if(y<=1625000)  return 550000;
+  if(y<=1800000)  return y*.4-100000;
+  if(y<=3600000)  return y*.3+80000;
+  if(y<=6600000)  return y*.2+440000;
+  if(y<=8500000)  return y*.1+1100000;
+  return 1950000;
+}
+
+function calcItax(t) { // 復興特別所得税（2.1%）込み
+  if(t<=0) return 0;
+  const b=[[1950000,.05,0],[3300000,.10,97500],[6950000,.20,427500],
+            [9000000,.23,636000],[18000000,.33,1536000],[40000000,.40,2796000],[Infinity,.45,4796000]];
+  for(const [l,r,d] of b) if(t<=l) return Math.round(t*r*1.021-d*1.021);
+  return 0;
+}
+
+function calcRtax(t) { // 均等割5000円込み概算
+  return t<=0 ? 5000 : Math.round(t*0.10)+5000;
+}
+
+function margRate(t) {
+  if(t<=1950000) return .05; if(t<=3300000) return .10;
+  if(t<=6950000) return .20; if(t<=9000000) return .23;
+  if(t<=18000000) return .33; if(t<=40000000) return .40;
+  return .45;
+}
+
+function snapHyojun(m) {
+  const g=[58000,68000,78000,88000,98000,104000,110000,118000,126000,134000,
+    142000,150000,160000,170000,180000,190000,200000,220000,240000,260000,
+    280000,300000,320000,340000,360000,380000,410000,440000,470000,500000,
+    530000,560000,590000,620000,650000,680000,710000,750000];
+  for(const v of g) if(m<=v) return v;
+  return g[g.length-1];
+}
+
+function estSocial(mainMonthly) {
+  if(userType==='freelance') {
+    return 16980 + Math.round(mainMonthly*0.10); // 国民年金+国保概算
+  }
+  return Math.round(snapHyojun(mainMonthly)*0.141); // 協会けんぽ東京+厚生年金
+}
+
+/* ── 社会保険パネル（ユーザータイプ別説明）── */
+function updateSocPanel(mainY, socY) {
+  const noteEl = $('b-soc-note');
+  const panelEl = $('soc-panel-body');
+  const explainEl = $('soc-explain');
+
+  if(userType === 'company') {
+    // 会社員：副業収入は社会保険に原則影響しない
+    if(noteEl) noteEl.textContent = '※ 会社員の副業は原則影響なし';
+    if(panelEl) panelEl.innerHTML =
+      `<strong>会社員の場合：</strong>副業収入（給与以外）は<strong>社会保険料に影響しません</strong>。`+
+      `社会保険料は本業の標準報酬月額で決定されます。<br>`+
+      `ただし副業も「給与」として受け取る場合（別会社から給与支払い）は<strong>合算される可能性</strong>があります。`;
+    if(explainEl){
+      explainEl.style.background = 'var(--blu-l)';
+      explainEl.style.border = '1px solid var(--blu-m)';
+      explainEl.innerHTML =
+        `<strong style="color:var(--blu)">👔 会社員の社会保険について</strong><br>`+
+        `本業の健康保険・厚生年金は会社が半額負担します。副業収入（業務委託・フリーランス報酬）はこれに<strong>影響しません</strong>。`+
+        `ここで表示している社会保険料は<strong>本業分のみ</strong>の概算です（協会けんぽ東京・標準報酬月額等級制）。`;
+    }
+  } else if(userType === 'freelance') {
+    if(noteEl) noteEl.textContent = '※ 国保+国民年金（概算）';
+    if(panelEl) panelEl.innerHTML =
+      `<strong>フリーランスの場合：</strong>国民健康保険＋国民年金（月約16,980円）が主な社会保険です。<br>`+
+      `国民健康保険料は<strong>前年の所得に応じて変動</strong>し、自治体によって大きく異なります（所得の約7〜12%）。`+
+      `ここの社会保険料はあくまで<strong>概算値</strong>です。`;
+    if(explainEl){
+      explainEl.style.background = 'var(--amb-l)';
+      explainEl.style.border = '1px solid var(--amb-m)';
+      explainEl.innerHTML =
+        `<strong style="color:var(--amb)">💻 フリーランスの社会保険について</strong><br>`+
+        `国民年金（月16,980円・2024年度）＋国民健康保険（所得の約7〜12%・自治体差大）が負担です。`+
+        `会社員と異なり<strong>全額自己負担</strong>になるため、額面より手取りが大幅に下がる点に注意してください。`+
+        `正確な金額はお住まいの市区町村でご確認ください。`;
+    }
+  } else {
+    if(noteEl) noteEl.textContent = '※ 会社員は副業影響なし';
+    if(panelEl) panelEl.innerHTML =
+      `<strong>副業初心者（会社員）の場合：</strong>副業の業務委託収入は社会保険に<strong>原則影響しません</strong>。`+
+      `本業の会社での社会保険がそのまま適用されます。`;
+    if(explainEl){
+      explainEl.style.background = 'var(--grn-l)';
+      explainEl.style.border = '1px solid var(--grn-m)';
+      explainEl.innerHTML =
+        `<strong style="color:var(--grn)">🌱 副業初心者の社会保険について</strong><br>`+
+        `会社員として副業を始める場合、業務委託報酬であれば<strong>社会保険に影響しません</strong>。`+
+        `会社に副業がバレる主なルートは「住民税の増加」です。確定申告時に「普通徴収」を選択することで防げる場合があります。`;
+    }
+  }
+}
+
+
+/* ──────── CORE CALC ──────── */
+function coreCalc({mainY,sideY,expY,ideY,socM,incomeType}) {
+  const blueDisc = incomeType==='biz' ? 650000 : 0;
+  const sideNet  = Math.max(0,sideY-expY);
+  const sideNetB = incomeType==='biz' ? Math.max(0,sideNet-blueDisc) : sideNet;
+  const sd       = salDed(mainY);
+  const socY     = socM*12;
+  const basicDed = 480000;
+  const totalInc = Math.max(0,mainY-sd)+sideNetB;
+  const taxable  = Math.max(0,totalInc-basicDed-ideY);
+  const itax     = calcItax(taxable);
+  const rtax     = calcRtax(taxable);
+  const totTax   = itax+rtax+socY;
+  const gross    = mainY+sideY;
+  const take     = gross-expY-itax-rtax-socY;
+  return {taxable,itax,rtax,totTax,gross,take,sideNet,sd,socY,blueDisc,basicDed};
+}
+
+/* ──────── MAIN CALC ──────── */
+function calc() {
+  const rawMain = +$('main-income').value||0;
+  const rawSide = +$('side-income').value||0;
+  const rawExp  = +$('expenses').value||0;
+  const hrs     = +$('hours').value||0;
+  const goalH   = +$('goal-jikyu').value||1500;
+  const rawIde  = +$('ideco').value||0;
+  const itype   = $('income-type').value;
+  const detOpen = $('det-sec').classList.contains('open');
+
+  const mainY = mode==='month'?rawMain*12:rawMain;
+  const sideY = mode==='month'?rawSide*12:rawSide;
+  const expY  = mode==='month'?rawExp*12:rawExp;
+  const ideY  = mode==='month'?rawIde*12:rawIde;
+
+  const mainMo  = mode==='month'?rawMain:Math.round(rawMain/12);
+  const socAutoM = estSocial(mainMo);
+  const socInputM = +$('social').value||0;
+  const socM    = detOpen&&socInputM>0 ? socInputM : socAutoM;
+  if(!detOpen) $('social').value = socAutoM;
+  $('soc-auto-lbl').textContent = detOpen&&socInputM>0
+    ? '※ 手動入力中'
+    : `自動推定: ¥${socAutoM.toLocaleString('ja-JP')}/月（${userType==='freelance'?'国保+国民年金概算':'協会けんぽ東京+厚生年金概算'}）`;
+
+  const withR    = coreCalc({mainY,sideY,expY,ideY,socM,incomeType:itype});
+  const withoutR = coreCalc({mainY,sideY:0,expY:0,ideY,socM,incomeType:itype});
+  const takeDiff = withR.take - withoutR.take;
+  const effRate  = withR.gross>0?(withR.itax+withR.rtax)/withR.gross*100:0;
+  const takeRate = withR.gross>0?withR.take/withR.gross*100:0;
+  const taxInc   = (withR.itax+withR.rtax)-(withoutR.itax+withoutR.rtax);
+  const taxRate  = sideY>0?taxInc/sideY*100:0;
+  const jikyuM   = hrs>0&&takeDiff>0?(takeDiff/12)/hrs:0;
+  const bepH     = hrs>0&&sideY>0?(expY/12+taxInc/12)/hrs:0;
+  const goalAch  = goalH>0&&jikyuM>0?jikyuM/goalH*100:0;
+  const mr       = margRate(withR.taxable);
+  const combRate = mr*1.021+0.10;
+  const recUnit  = hrs>0?Math.ceil(((goalH*hrs)+expY/12)/(1-combRate)/100)*100:0;
+  const minUnit  = hrs>0&&sideY>0?Math.ceil((expY/12+taxInc/12)/hrs/100)*100:0;
+
+  /* Save state */
+  S = {mainY,sideY,expY,ideY,socM,itype,hrs,goalH,
+       withR,withoutR,takeDiff,effRate,takeRate,taxInc,taxRate,
+       jikyuM,bepH,goalAch,mr,combRate,recUnit,minUnit};
+
+  /* ── Emotion box ── */
+  if(sideY>0&&hrs>0){
+    const sm=Math.round(sideY/12), tm=Math.round(taxInc/12), pct=Math.round(taxRate);
+    $('emo-box').innerHTML=`月 <strong>${fmt(sm)}</strong>（税引前）稼いでも → 税負担増は月 <strong>約${fmt(tm)}</strong>（副業収入の<strong>${pct}%</strong>）です`;
+  } else {
+    $('emo-box').textContent='副業収入・稼働時間を入力すると税の実態が表示されます';
+  }
+
+  /* ── Hero ── */
+  set('hero-amount', fmt(withR.take));
+  set('hero-rate', takeRate.toFixed(1)+'%');
+  const gf=$('gm-fill');
+  gf.style.width=Math.min(160,goalAch)+'%';
+  gf.className='gm-fill '+(goalAch>=100?'gm-ok':'gm-ng');
+  set('gm-a', hrs>0?`実質時給 ${fmt(jikyuM)}/h（税引後）`:'実質時給 — 稼働時間を入力');
+  set('gm-g', `目標 ${fmt(goalH)}/h`);
+  set('gm-st', goalAch===0?'稼働時間を入力してください':
+    goalAch>=100?`✅ 目標達成（${goalAch.toFixed(0)}%）`:
+    `⚠️ 目標の${goalAch.toFixed(0)}%。単価 +${fmt(recUnit-Math.round(sideY/12/Math.max(hrs,1)))} で達成できます。`);
+
+  /* ── KPI ── */
+  set('kpi-diff',    fmtS(takeDiff));
+  set('kpi-jikyu',   hrs>0?fmt(jikyuM)+'/h':'—');
+  set('kpi-taxrate', Math.round(taxRate)+'%');
+  const kd=$('kpi-diff').closest('.kpi');
+  $('kpi-diff').className='kpi-val '+(takeDiff>=0?'grn':'red');
+
+  /* ── Compare ── */
+  set('c-main-gross', fmt(mainY));
+  set('c-without',    fmt(withoutR.take));
+  set('c-gross-side', fmt(sideY));
+  set('c-with',       fmt(withR.take));
+  set('c-gain',       fmtS(takeDiff));
+  const db=$('diff-box');
+  db.className='diff-box '+(takeDiff>=0?'diff-pos':'diff-neg');
+  $('diff-lbl').className='diff-lbl '+(takeDiff>=0?'p':'n');
+  $('diff-lbl').textContent=takeDiff>=0?'副業で増えた手取り（年・税引後）':'副業でむしろ減った手取り（年）';
+  $('diff-val').className='diff-val syne '+(takeDiff>=0?'p':'n');
+  set('diff-val', (takeDiff>=0?'+':'')+fmt(Math.abs(takeDiff)));
+  const opp=Math.max(0,takeDiff);
+  set('opp-3y',  fmt(opp*3));
+  set('opp-5y',  fmt(opp*5));
+  set('opp-10y', fmt(opp*10));
+  $('opp-msg').textContent=takeDiff<=0
+    ?'現状では副業で手取りが減っています。条件を見直してください。'
+    :`副業をやらないことで年${fmt(takeDiff)}の手取りを失い続けます。`;
+
+  /* ── Breakdown ── */
+  set('b-main',    fmt(mainY));
+  set('b-sidenet', fmt(withR.sideNet)+(itype==='biz'?`（青色-${fmt(withR.blueDisc)}）`:''));
+  set('b-saldec',  '-'+fmt(withR.sd));
+  set('b-ideco',   ideY>0?'-'+fmt(ideY):'¥0');
+  set('b-taxable', fmt(withR.taxable));
+  set('b-itax',    '-'+fmt(withR.itax));
+  set('b-rtax',    '-'+fmt(withR.rtax));
+  set('b-social',  '-'+fmt(withR.socY));
+  set('b-taxtotal','-'+fmt(withR.itax+withR.rtax+withR.socY));
+  set('b-effrate', effRate.toFixed(1)+'%');
+
+  /* ── 税率チップ（内訳表示）── */
+  const itaxRateLabel = `税率${(mr*100).toFixed(0)}%`;
+  set('b-itax-rate', itaxRateLabel);
+
+  /* ── 税率サマリー ── */
+  set('rs-itax',  `${(mr*100).toFixed(0)}%`);
+  set('rs-total', `約${(mr*100+10).toFixed(0)}%`);
+
+  /* ── 社会保険パネル（ユーザータイプ別）── */
+  updateSocPanel(mainY, withR.socY);
+
+  /* ── Graph ── */
+  const mx=Math.max(withR.gross,1);
+  setH('gb-inc',  withR.gross/mx*100);
+  setH('gb-tax',  withR.totTax/mx*100);
+  setH('gb-take', Math.max(0,withR.take)/mx*100);
+  set('gv-inc',  fmt(withR.gross));
+  set('gv-tax',  '-'+fmt(withR.totTax));
+  set('gv-take', fmt(withR.take));
+  const tP=withR.gross>0?withR.totTax/withR.gross*100:0;
+  const kP=withR.gross>0?Math.max(0,withR.take)/withR.gross*100:100;
+  set('rbt-p', tP.toFixed(1)+'%'); set('rbk-p', kP.toFixed(1)+'%');
+  setW('rbt',tP); setW('rbk',kP);
+
+  /* ── Impact ── */
+  set('imp-jikyu',   hrs>0?fmt(jikyuM)+'/h':'—');
+  set('imp-goal',    goalAch>0?goalAch.toFixed(0)+'%':'—');
+  $('imp-goal').className='imp-val '+(goalAch>=100?'grn':goalAch>=70?'amb':'red');
+  set('imp-goal-sub', hrs>0?`目標${fmt(goalH)}/h 対比`:'稼働時間を入力');
+  set('imp-txrate', Math.round(taxRate)+'%');
+  set('imp-bep',    hrs>0&&bepH>0?fmt(bepH)+'/h':'—');
+
+  /* ── Unit price ── */
+  set('u-min', hrs>0&&minUnit>0?fmt(minUnit)+'/h':'—');
+  set('u-min-sub', hrs>0?`月${hrs}h稼働で経費・税増分を回収できる最低単価`:'稼働時間を入力');
+  set('u-rec', hrs>0?fmt(recUnit)+'/h':'—');
+  set('u-rec-sub', hrs>0?`目標時給${fmt(goalH)}/h を達成できる推奨単価`:'稼働時間を入力');
+  if(hrs>0&&sideY>0){
+    const currH=Math.round(sideY/12/hrs);
+    $('unit-why').innerHTML=`現在の単価は約<strong>${fmt(currH)}/h</strong>（税引前）、実質時給は<strong>${fmt(jikyuM)}/h</strong>（税引後）。`+
+      `目標達成には<strong>${fmt(recUnit)}/h</strong>への値上げ（+${fmt(recUnit-currH)}）が必要です。`+
+      `限界税率${(mr*100).toFixed(0)}%（所得税）＋住民税10%＝<strong>合計税率約${(combRate*100).toFixed(0)}%</strong>を考慮した逆算値です。`;
+  } else {
+    $('unit-why').textContent='副業収入・稼働時間を入力すると根拠が表示されます。';
+  }
+
+  /* ── Alerts ── */
+  updateAlerts({sideY,taxRate,taxInc,takeDiff,jikyuM,goalH,hrs,expY,itype,withR,withoutR});
+
+  /* ── Verdict ── */
+  updateVerdict({takeDiff,sideY,taxRate,jikyuM,goalH,hrs,goalAch,recUnit,expY,withR,itype});
+
+  /* ── Nego template (refresh) ── */
+  buildNegoTemplate();
+
+  /* ── Persist & history ── */
+  persistState();
+  renderDelta();
+  maybeShowSaveBanner();
+}
+
+/* ──────── ALERTS ──────── */
+function updateAlerts({sideY,taxRate,taxInc,takeDiff,jikyuM,goalH,hrs,expY,itype,withR,withoutR}) {
+  const w=$('alerts'); w.innerHTML='';
+  if(!sideY) return;
+  const add=(cls,icon,h)=>{ w.innerHTML+=`<div class="al ${cls}"><span class="al-icon">${icon}</span><span>${h}</span></div>`; };
+  const sideIncome=Math.max(0,sideY-expY);
+  if(sideIncome>200000) add('al-warn','⚠️',
+    `副業<strong>所得（収入−経費）が20万円超</strong>のため<strong>所得税の確定申告が必要</strong>です。`+
+    `なお<strong>住民税は金額に関わらず別途申告が必要</strong>な場合があります（市区町村へ確認を）。増える税負担は年約<strong>${fmt(taxInc)}</strong>です。`);
+  else if(sideIncome>0&&sideIncome<=200000) add('al-info','💡',
+    `副業所得が20万円以下のため、<strong>所得税の確定申告は不要</strong>になる場合があります。`+
+    `ただし<strong>住民税の申告は別途必要</strong>です（お住まいの市区町村へ）。`);
+  if(taxRate>33) add('al-danger','🔴',`副業収入の約<strong>${Math.round(taxRate)}%</strong>が税金で消えます。稼働時間を増やすより<strong>単価を上げる</strong>ほうが税効率は高いです。`);
+  if(hrs>0&&jikyuM>0&&jikyuM<goalH*0.5) add('al-danger','⚡',`実質時給<strong>${fmt(jikyuM)}/h</strong>は目標の半分以下。このまま続けると時間コストに見合いません。`);
+  if(expY===0&&sideY>0) add('al-info','💡','経費を計上すると課税所得が下がり手取りが増えます。経費チェックリストで計上漏れを確認してください。');
+  if(withR.taxable>6950000) add('al-danger','⚡','課税所得が<strong>695万円超</strong>で所得税率20%以上が適用中。iDeCoや小規模企業共済での節税が急務です。');
+  if(itype==='misc'&&sideY>600000) add('al-warn','💼',`副業年収が60万円超。<strong>事業所得への切り替え</strong>（青色申告65万控除）を検討する価値があります。税理士にご相談を。`);
+  if(takeDiff<0) add('al-danger','🚨','現状では<strong>副業で手取りが減少</strong>しています。単価・経費・稼働時間を見直してください。');
+  if(takeDiff>0&&jikyuM>=goalH&&hrs>0) add('al-good','✅',`目標時給クリア！続けると5年で累計<strong>${fmt(Math.max(0,takeDiff)*5)}</strong>の手取り増になります。`);
+}
+
+/* ──────── VERDICT ──────── */
+function updateVerdict({takeDiff,sideY,taxRate,jikyuM,goalH,hrs,goalAch,recUnit,expY,withR,itype}) {
+  const block=$('verdict-block'), icon=$('v-icon'), title=$('v-title'), body=$('v-body');
+  if(!sideY){
+    block.className='vt vt-pending';
+    icon.textContent='⏳'; title.textContent='副業収入を入力すると判定が出ます';
+    body.innerHTML=''; return;
+  }
+  let cls,ic,tx; const reasons=[];
+  if(takeDiff<0){
+    cls='stop';ic='⛔';tx='この副業は「やめるべき」—— 手取りが減少中';
+    reasons.push({i:'❌',t:`副業で手取りが年${fmt(Math.abs(takeDiff))}減少しています。`});
+    reasons.push({i:'💡',t:'単価交渉または経費計上で改善できる可能性があります。→ 行動ツールで解決策を確認してください。'});
+  } else if(goalAch<70){
+    cls='caution';ic='⚠️';tx='この副業は「条件改善が必要」—— 目標時給未達';
+    reasons.push({i:'📊',t:`実質時給${hrs>0?fmt(jikyuM)+'/h':'—'} は目標${fmt(goalH)}/h の${goalAch.toFixed(0)}%。`});
+    reasons.push({i:'🎯',t:`推奨単価 ${fmt(recUnit)}/h への値上げが最優先アクション。→ 交渉テンプレを使ってください。`});
+  } else if(goalAch>=100){
+    cls='go';ic='✅';tx='この副業は「やる価値あり」—— 目標時給クリア';
+    reasons.push({i:'✅',t:`実質時給${fmt(jikyuM)}/h で目標${fmt(goalH)}/h を達成しています。`});
+    if(taxRate>30) reasons.push({i:'⚠️',t:`副業の税率は${Math.round(taxRate)}%と高め。さらに単価を上げると税効率が改善します。`});
+    reasons.push({i:'🚀',t:`続けると5年で累計${fmt(Math.max(0,takeDiff)*5)}の手取り増。`});
+  } else {
+    cls='caution';ic='🟡';tx='この副業は「もう少しで黒字」—— 改善余地あり';
+    reasons.push({i:'📊',t:`実質時給${hrs>0?fmt(jikyuM)+'/h':'—'} は目標の${goalAch.toFixed(0)}%。あと一歩。`});
+    reasons.push({i:'🎯',t:`単価を ${fmt(recUnit)}/h に引き上げると目標達成できます。`});
+  }
+  if(itype==='misc'&&sideY>600000) reasons.push({i:'💼',t:'事業所得（青色申告）に切り替えると手取りがさらに改善できます。'});
+  block.className=`vt vt-${cls}`;
+  icon.textContent=ic; title.textContent=tx;
+  body.innerHTML=reasons.map(r=>`<div class="vt-r"><span class="vt-ri">${r.i}</span><span>${r.t}</span></div>`).join('');
+}
+
+/* ──────── WHAT-IF ──────── */
+function runWhatif(scenario, btn) {
+  document.querySelectorAll('.wb').forEach(b=>b.classList.remove('on'));
+  if(!scenario){ $('wif-res').innerHTML='<div class="wfr-placeholder">シナリオを選ぶと結果が表示されます</div>'; return; }
+  btn.classList.add('on');
+  if(!S.mainY){ $('wif-res').innerHTML='<div class="wfr-placeholder">先に収入を入力してください</div>'; return; }
+  let lbl='',addIde=0,addExp=0,sideMult=1;
+  switch(scenario){
+    case 'ideco2': lbl='iDeCo 月2万円追加'; addIde=20000*12; break;
+    case 'ideco5': lbl='iDeCo 月5万円追加'; addIde=50000*12; break;
+    case 'exp1':   lbl='経費 +1万円/月';     addExp=10000*12; break;
+    case 'exp3':   lbl='経費 +3万円/月';     addExp=30000*12; break;
+    case 'price120': lbl='単価 +20%（副業収入20%増）'; sideMult=1.2; break;
+    case 'price150': lbl='単価 +50%（副業収入50%増）'; sideMult=1.5; break;
+  }
+  const nr=coreCalc({mainY:S.mainY,sideY:S.sideY*sideMult,expY:S.expY+addExp,
+    ideY:S.ideY+addIde,socM:S.socM,incomeType:S.itype});
+  const diff=nr.take-S.withR.take;
+  const nj=S.hrs>0&&diff>0?(S.withR.take+diff-S.withoutR.take)/12/S.hrs:0;
+  const nr_eff=nr.gross>0?(nr.itax+nr.rtax)/nr.gross*100:0;
+  $('wif-res').innerHTML=`
+    <div class="wfr-lbl">📊 ${lbl}</div>
+    <div class="wfr-row"><span class="wfr-name">変更後 年間手取り</span><span class="wfr-val">${fmt(nr.take)}</span></div>
+    <div class="wfr-row"><span class="wfr-name">現状との差額</span><span class="wfr-diff">${fmtS(diff)}/年</span></div>
+    <div class="wfr-row"><span class="wfr-name">変更後 実質時給</span><span class="wfr-val">${S.hrs>0?fmt(nj)+'/h':'—'}</span></div>
+    <div class="wfr-row"><span class="wfr-name">変更後 実効税率</span><span class="wfr-val">${nr_eff.toFixed(1)}%</span></div>
+  `;
+}
+
+/* ──────── MODALS ──────── */
+function openModal(id) {
+  $(id).classList.add('show');
+  document.body.style.overflow='hidden';
+  if(id==='modal-nego')   buildNegoTemplate();
+  if(id==='modal-exp')    buildExpList();
+  if(id==='modal-ideco')  calcIdeco();
+  if(id==='modal-houjin') calcHoujin();
+}
+function closeModal(id) {
+  $(id).classList.remove('show');
+  document.body.style.overflow='';
+}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) closeModal(o.id); });
+});
+
+/* ── Negotiation Template ── */
+function buildNegoTemplate() {
+  const currH = S.hrs>0&&S.sideY>0 ? Math.round(S.sideY/12/S.hrs) : 3000;
+  const recH  = S.recUnit || 4000;
+  const itype = ($('income-type')||{}).value||'misc';
+  const typeTxt = itype==='biz'?'Web制作・デザイン':'副業・業務委託';
+  const tmpl=
+`件名：業務委託単価の見直しについてのご相談
+
+お世話になっております。
+[あなたの名前]と申します。
+
+現在ご依頼いただいている${typeTxt}業務につきまして、
+単価の見直しをご相談させていただきたく、ご連絡いたしました。
+
+【現状と背景】
+現在の単価：${fmt(currH)}/時間
+稼働時間：月${S.hrs||20}時間
+提供してきた主な成果・実績：
+・[具体的な成果を記載してください]
+・[数値があれば記載すると効果的です]
+
+【ご提案】
+次回更新時より、単価を ${fmt(recH)}/時間 への
+改定をご検討いただけますでしょうか。
+
+【理由】
+・業務の難易度・専門性が当初より高まっております
+・品質向上のための学習投資を継続しております
+・市場相場を確認した結果、適正単価と判断しております
+
+ご多忙のところ恐れ入りますが、
+一度お時間をいただき、ご相談できますと幸いです。
+
+どうぞよろしくお願いいたします。
+[あなたの名前]`;
+  $('nego-tmpl').value=tmpl;
+}
+
+function copyTmpl() {
+  const t=$('nego-tmpl');
+  t.select();
+  document.execCommand('copy');
+  const btn=$('nego-copy-btn');
+  btn.textContent='✅ コピーしました！';
+  btn.classList.add('copied');
+  setTimeout(()=>{ btn.textContent='📋 コピーする'; btn.classList.remove('copied'); },2000);
+}
+
+/* ── Expense Checklist ── */
+function buildExpList() {
+  const itype = ($('income-type')||{}).value||'misc';
+  const common=[
+    {n:'通信費（スマホ・インターネット）',d:'業務利用分を按分。副業専用SIMなら全額可。'},
+    {n:'書籍・資料代',d:'業務に関連する専門書・電子書籍・雑誌など。'},
+    {n:'ソフトウェア・サブスク',d:'AdobeCC、Figma、Notion等の業務利用分。'},
+    {n:'交通費',d:'打ち合わせ・取材等の往復交通費。'},
+    {n:'カフェ・コワーキング代',d:'業務利用の場合。領収書を保管。'},
+    {n:'周辺機器（マウス・キーボード等）',d:'業務専用なら全額、兼用なら按分。'},
+  ];
+  const bizOnly=[
+    {n:'PC・タブレット購入費',d:'事業所得なら按分または一括経費計上可（10万未満）。'},
+    {n:'家賃（在宅勤務按分）',d:'事業専用スペースの面積割合で按分可能。'},
+    {n:'光熱費（在宅按分）',d:'事業利用時間・面積で按分。領収書・計算根拠を保管。'},
+    {n:'外注費・業務委託費',d:'下請けへの外注費。源泉徴収に注意。'},
+    {n:'接待交際費',d:'取引先との会食等。事業関連性が必要。5,000円ルールに注意。'},
+    {n:'セミナー・研修費',d:'業務スキルアップのための費用。'},
+  ];
+  const items = itype==='biz' ? [...common,...bizOnly] : common;
+  let html_='';
+  const sections = itype==='biz'
+    ? [{title:'共通（雑所得・事業所得）',items:common},{title:'事業所得のみ（青色申告）',items:bizOnly}]
+    : [{title:'雑所得で計上できる主な経費',items:common}];
+  sections.forEach(s=>{
+    html_+=`<div class="exp-section"><div class="exp-section-ttl">${s.title}</div>`;
+    s.items.forEach((item,i)=>{
+      const cbId=`ecb-${s.title.slice(0,3)}-${i}`;
+      html_+=`<div class="exp-item">
+        <input type="checkbox" class="exp-cb" id="${cbId}" onchange="updateExpCount()"/>
+        <div class="exp-info"><div class="exp-name">${item.n}</div><div class="exp-desc">${item.d}</div></div>
+      </div>`;
+    });
+    html_+='</div>';
+  });
+  $('exp-list').innerHTML=html_;
+  updateExpCount();
+}
+
+function updateExpCount() {
+  const all=document.querySelectorAll('#exp-list .exp-cb');
+  const chk=document.querySelectorAll('#exp-list .exp-cb:checked');
+  $('exp-count').textContent=`${chk.length} / ${all.length} 項目チェック済み`;
+}
+
+/* ── iDeCo シミュ ── */
+function calcIdeco() {
+  const monthly=+$('ideco-sim').value||0;
+  const years  =+$('ideco-years').value||20;
+  const mr = S.taxable ? margRate(S.taxable) : 0.10;
+  const yrDed  = monthly*12;
+  const yrTax  = Math.round(yrDed*(mr*1.021+0.10));
+  const moInc  = Math.round(yrTax/12);
+  const total  = yrTax*years;
+  const invest = monthly*12*years;
+  set('id-yr-tax', fmt(yrTax));
+  set('id-mo-inc', fmt(moInc));
+  set('id-total',  fmt(total));
+  set('id-invest', fmt(invest));
+}
+
+/* ── 法人化判定 ── */
+function calcHoujin() {
+  const income=+$('hj-income').value||0;
+  const profit=+$('hj-profit').value||0;
+  let score=0; const points=[];
+  if(income>=10000000){ score+=40; points.push({i:'✅',t:`年収1,000万円超：<strong>法人化を強く推奨</strong>します。消費税の課税事業者になるタイミングと合わせて検討を。`}); }
+  else if(income>=8000000){ score+=25; points.push({i:'🟡',t:`年収800万円超：<strong>法人化の検討段階</strong>です。税理士に相談して試算を。`}); }
+  else if(income>=5000000){ score+=10; points.push({i:'💡',t:`年収500万円超：数年後の法人化を見据えて<strong>準備を始める</strong>段階です。`}); }
+  else { points.push({i:'⏳',t:`年収が500万円未満の段階では、<strong>個人事業主のまま節税策</strong>（iDeCo・青色申告等）を最大化する方が効率的です。`}); }
+
+  if(profit>=5000000){ score+=30; points.push({i:'✅',t:`利益500万円超：<strong>法人税率（実効約23%）</strong>が個人の所得税率を下回る水準です。`}); }
+  else if(profit>=3000000){ score+=15; points.push({i:'🟡',t:`利益300万円超：法人化の税メリットが出始める水準です。`}); }
+
+  score=Math.min(score,100);
+  const fill=$('hm-fill');
+  fill.style.width=score+'%';
+  $('hm-score-lbl').textContent=`スコア: ${score}/100`;
+
+  const vd=$('hj-verdict');
+  if(score>=60){
+    vd.className='houjin-verdict hv-go';
+    vd.textContent='🏢 今すぐ法人化を検討すべきです。税理士に相談してください。';
+  } else if(score>=25){
+    vd.className='houjin-verdict hv-maybe';
+    vd.textContent='🟡 法人化の検討段階です。数字を揃えて税理士に相談を。';
+  } else {
+    vd.className='houjin-verdict hv-not-yet';
+    vd.textContent='⏳ まだ個人のまま節税を最大化する段階です。';
+  }
+  $('hj-points').innerHTML=points.map(p=>`<div class="hp"><span>${p.i}</span><span>${p.t}</span></div>`).join('');
+}
+
+/* ──────── EDUCATION ──────── */
+function updateEdu(t) {
+  const msgs={
+    company:{
+      a1:'副業収入は<strong>本業の所得に上乗せされて課税</strong>されます（総合課税）。本業だけなら10%税率でも、副業分がより高い税率帯（20〜33%）に入り、実際の手取り増は想像より少なくなります。これを「限界税率効果」と呼びます。',
+      a3:'クラウドワークス・アフィリエイト・YouTube等は原則<strong>雑所得</strong>。青色申告特別控除（最大65万円）は使えず、損失の損益通算も不可。一方、Web制作・デザイン等の継続的事業は<strong>事業所得</strong>として認められる場合があり、節税効果が高くなります。',
+      a4:'①<strong>経費を最大化</strong>（通信費・機材・書籍等）②<strong>iDeCo</strong>（月最大2.3万円全額控除）③<strong>ふるさと納税</strong> ④副業が大きくなったら<strong>事業所得化</strong>（青色申告65万控除）を検討。',
+    },
+    freelance:{
+      a1:'青色申告では<strong>最大65万円の特別控除</strong>（電子申告）が受けられます。経費も家賃・光熱費の按分など広く計上でき、実効税率を大きく引き下げられます。まず確定申告ソフトを活用しましょう。',
+      a3:'フリーランスは原則<strong>事業所得</strong>として申告します。青色申告承認申請を提出していない場合は白色申告になり、控除が大幅に減ります。まだなら所轄税務署へ早急に申請を。',
+      a4:'①<strong>小規模企業共済</strong>（月7万円まで全額控除）②<strong>経営セーフティ共済</strong> ③<strong>法人化</strong>（利益300〜500万円超が目安）④インボイス登録の判断（取引先に法人が多いか確認）。',
+    },
+    beginner:{
+      a1:'副業収入が年<strong>20万円以下（所得ベース）</strong>なら所得税の確定申告は原則不要です。ただし住民税の申告は別途必要なケースがあります。まず小さく始めて、税務の流れに慣れることが大切です。',
+      a3:'最初は<strong>雑所得</strong>として申告するケースがほとんどです。大事なのは経費の記録を始めること。レシートを保管し、Googleスプレッドシートや家計簿アプリで管理しましょう。収入が年100万円を超えたら税理士への相談を。',
+      a4:'①まず<strong>経費を記録する習慣</strong>をつける ②<strong>確定申告ソフト</strong>（freee・マネーフォワードクラウド）を使う ③iDeCoは副業が安定してから開始 ④副業収入が年300万円超えたら本格化を検討。',
+    },
+  };
+  const m=msgs[t];
+  html('ea1',m.a1); html('ea3',m.a3); html('ea4',m.a4);
+}
+
+/* ──────── USER TYPE & MODE ──────── */
+function setUT(t) {
+  userType=t;
+  document.querySelectorAll('.ut').forEach((b,i)=>b.classList.toggle('on',['company','freelance','beginner'][i]===t));
+  const p={company:{main:350000,side:80000,exp:15000,hrs:20,goal:1500},
+            freelance:{main:500000,side:150000,exp:30000,hrs:30,goal:2500},
+            beginner:{main:250000,side:30000,exp:5000,hrs:10,goal:1000}}[t];
+  ['main-income','side-income','expenses'].forEach((id,i)=>{
+    $( id).value=mode==='month'?[p.main,p.side,p.exp][i]:Math.round([p.main,p.side,p.exp][i]*12);
+  });
+  $('hours').value=p.hrs; $('goal-jikyu').value=p.goal;
+  updateEdu(t);
+  updateSocPanel(0, 0); // reset panel with new user type context
+  calc();
+}
+
+function setMode(m) {
+  const prev=mode; mode=m;
+  $('btn-m').classList.toggle('on',m==='month');
+  $('btn-y').classList.toggle('on',m==='year');
+  ['main-income','side-income','expenses'].forEach(id=>{
+    const v=+$(id).value||0;
+    $(id).value=prev==='month'?Math.round(v*12):Math.round(v/12);
+  });
+  calc();
+}
+
+function toggleDet() {
+  const s=$('det-sec'),b=$('det-btn');
+  s.classList.toggle('open');
+  b.textContent=s.classList.contains('open')?'▾ 詳細設定（社会保険・iDeCo）':'▸ 詳細設定（社会保険・iDeCo）';
+}
+
+function onItypeChange() {
+  const v=$('income-type').value;
+  const n=$('itype-note');
+  n.className='itype-note '+(v==='misc'?'itype-misc':'itype-biz');
+  n.textContent=v==='misc'
+    ?'📌 雑所得：経費は差し引けますが、青色申告特別控除（最大65万円）は使えません。損失の損益通算も不可。確定申告ソフトでの管理がおすすめです。'
+    :'📌 事業所得（青色申告）：経費を広く計上でき、青色申告特別控除（65万円）が適用されます。家賃・光熱費の按分も可能。継続的な事業として認められる必要があります。';
+  calc();
+}
+
+/* ──────── EVENTS ──────── */
+['main-income','side-income','expenses','hours','goal-jikyu','social','ideco'].forEach(id=>{
+  $(id)?.addEventListener('input',calc);
+});
+
+/* ════════════════════════════════
+   PERSISTENCE ENGINE
+════════════════════════════════ */
+const LS_STATE   = 'flos_state_v1';
+const LS_HISTORY = 'flos_history_v1';
+let _saveBannerDismissed = false;
+let _lastSavedHash = null;
+
+/* ── Collect current input state ── */
+function collectState() {
+  return {
+    mode, userType,
+    mainIncome : +$('main-income').value || 0,
+    sideIncome : +$('side-income').value || 0,
+    expenses   : +$('expenses').value    || 0,
+    hours      : +$('hours').value       || 0,
+    goalJikyu  : +$('goal-jikyu').value  || 1500,
+    incomeType : $('income-type').value  || 'misc',
+    social     : +$('social').value      || 0,
+    ideco      : +$('ideco').value       || 0,
+    detOpen    : $('det-sec').classList.contains('open'),
+  };
+}
+
+/* ── Apply state to inputs ── */
+function applyState(st) {
+  if(!st) return;
+  if(st.mode && st.mode !== mode) setMode(st.mode);
+  if(st.userType && st.userType !== userType) {
+    userType = st.userType;
+    document.querySelectorAll('.ut').forEach((b,i)=>
+      b.classList.toggle('on',['company','freelance','beginner'][i]===userType));
+  }
+  const fields = {
+    'main-income': st.mainIncome, 'side-income': st.sideIncome,
+    'expenses': st.expenses, 'hours': st.hours,
+    'goal-jikyu': st.goalJikyu, 'social': st.social, 'ideco': st.ideco,
+  };
+  Object.entries(fields).forEach(([id,v]) => { const e=$(id); if(e) e.value=v; });
+  const sel = $('income-type');
+  if(sel && st.incomeType) { sel.value = st.incomeType; onItypeChange(); }
+  if(st.detOpen) { $('det-sec').classList.add('open'); $('det-btn').textContent='▾ 詳細設定（社会保険・iDeCo）'; }
+  updateEdu(userType);
+}
+
+/* ── Auto-save state on every calc ── */
+function persistState() {
+  try { localStorage.setItem(LS_STATE, JSON.stringify(collectState())); } catch(e){}
+}
+
+/* ── Load state on boot ── */
+function loadPersistedState() {
+  try {
+    const raw = localStorage.getItem(LS_STATE);
+    if(!raw) return false;
+    const st = JSON.parse(raw);
+    applyState(st);
+    return true;
+  } catch(e) { return false; }
+}
+
+/* ── Snapshot hash (simple change detection) ── */
+function snapshotHash(snap) {
+  return [snap.mainIncome, snap.sideIncome, snap.expenses, snap.hours,
+          snap.takehome, snap.jikyu].join('|');
+}
+
+/* ── Save snapshot to history ── */
+function saveSnapshot(label) {
+  if(!S.withR) return;
+  const snap = {
+    id       : Date.now(),
+    savedAt  : new Date().toLocaleDateString('ja-JP', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+    label    : label || buildAutoLabel(),
+    userType, mode,
+    mainIncome : S.mainY,
+    sideIncome : S.sideY,
+    expenses   : S.expY,
+    hours      : S.hrs,
+    goalJikyu  : S.goalH,
+    incomeType : S.itype,
+    takehome   : S.withR.take,
+    takeDiff   : S.takeDiff,
+    jikyu      : S.jikyuM,
+    goalAch    : S.goalAch,
+    effRate    : S.effRate,
+    taxRate    : S.taxRate,
+  };
+  try {
+    let hist = getHistory();
+    hist.unshift(snap);
+    hist = hist.slice(0,5); // max 5
+    localStorage.setItem(LS_HISTORY, JSON.stringify(hist));
+    _lastSavedHash = snapshotHash(snap);
+    _saveBannerDismissed = false;
+    dismissSaveBanner();
+    renderHistory();
+    showToast('✅ 保存しました！次回との比較に使います。');
+  } catch(e) { showToast('⚠️ 保存に失敗しました（ストレージ制限の可能性）'); }
+}
+
+function buildAutoLabel() {
+  const sideM = Math.round(S.sideY/12);
+  return `副業${Math.round(S.sideY/10000)}万/年・${S.hrs}h/月`;
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(LS_HISTORY)||'[]'); } catch(e){ return []; }
+}
+
+function clearAllHistory() {
+  if(!confirm('全ての履歴を削除しますか？')) return;
+  try { localStorage.removeItem(LS_HISTORY); } catch(e){}
+  renderHistory();
+  $('delta-block').style.display='none';
+  showToast('🗑️ 履歴を削除しました');
+}
+
+function deleteHistory(id) {
+  const hist = getHistory().filter(h=>h.id!==id);
+  try { localStorage.setItem(LS_HISTORY, JSON.stringify(hist)); } catch(e){}
+  renderHistory();
+  if(hist.length===0) $('delta-block').style.display='none';
+}
+
+/* ── Render history list ── */
+function renderHistory() {
+  const wrap = $('hist-list-wrap');
+  if(!wrap) return;
+  const hist = getHistory();
+  if(hist.length===0){
+    wrap.innerHTML='<div class="hist-empty">まだ保存されたシミュレーションがありません。<br>「保存する」ボタンで記録を始めましょう。</div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="hist-list">' + hist.map((h,i) => `
+    <div class="hist-item${i===0?' active-hist':''}" onclick="restoreSnapshot(${h.id})" title="クリックで復元">
+      <div class="hist-top">
+        <div>
+          <div class="hist-label">${escHtml(h.label)}</div>
+          <div class="hist-date">${h.savedAt}</div>
+        </div>
+        <button class="hist-del" onclick="event.stopPropagation();deleteHistory(${h.id})" title="削除">✕</button>
+      </div>
+      <div class="hist-metrics">
+        <div class="hist-m">手取り <span>${fmt(h.takehome)}</span></div>
+        <div class="hist-m">差額 <span style="color:${h.takeDiff>=0?'var(--grn)':'var(--red)'}">${h.takeDiff>=0?'+':''}${fmt(Math.abs(h.takeDiff))}</span></div>
+        ${h.jikyu>0?`<div class="hist-m">時給 <span>${fmt(h.jikyu)}/h</span></div>`:''}
+        <div class="hist-m">目標 <span>${h.goalAch.toFixed(0)}%</span></div>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+/* ── Restore snapshot ── */
+function restoreSnapshot(id) {
+  const snap = getHistory().find(h=>h.id===id);
+  if(!snap) return;
+  const st = {
+    mode: snap.mode || 'year',
+    userType: snap.userType || 'company',
+    mainIncome: snap.mainIncome,
+    sideIncome: snap.sideIncome,
+    expenses  : snap.expenses,
+    hours     : snap.hours,
+    goalJikyu : snap.goalJikyu,
+    incomeType: snap.incomeType || 'misc',
+    social: 0, ideco: 0, detOpen: false,
+  };
+  applyState(st);
+  calc();
+  window.scrollTo({top:0, behavior:'smooth'});
+  showToast('🔄 シミュレーションを復元しました');
+}
+
+/* ── Show/hide save banner (triggered after calc) ── */
+function maybeShowSaveBanner() {
+  if(_saveBannerDismissed) return;
+  if(!S.sideY || S.sideY===0) return;
+  // Build hash of current result
+  const currHash = snapshotHash({
+    mainIncome:S.mainY, sideIncome:S.sideY, expenses:S.expY,
+    hours:S.hrs, takehome:S.withR?.take||0, jikyu:S.jikyuM
+  });
+  if(currHash === _lastSavedHash) return; // already saved this state
+  const hist = getHistory();
+  // Only show if result is meaningfully different from last save
+  if(hist.length>0){
+    const last = hist[0];
+    const takeDiffVsLast = Math.abs((S.withR?.take||0) - last.takehome);
+    if(takeDiffVsLast < 1000) return; // less than ¥1k change → don't prompt
+  }
+  const banner = $('save-banner');
+  if(banner) banner.style.display='flex';
+}
+
+function dismissSaveBanner() {
+  _saveBannerDismissed = true;
+  const banner = $('save-banner');
+  if(banner) banner.style.display='none';
+}
+
+/* ── Delta block (前回との比較) ── */
+function renderDelta() {
+  const hist = getHistory();
+  const block = $('delta-block');
+  if(!block || hist.length<1 || !S.withR) { if(block) block.style.display='none'; return; }
+  const last = hist[0];
+  const takeDiff = (S.withR.take||0) - last.takehome;
+  const jikyuDiff = S.jikyuM - (last.jikyu||0);
+  const jikyuPct  = last.jikyu>0 ? jikyuDiff/last.jikyu*100 : 0;
+  const goalDiff  = (S.goalAch||0) - (last.goalAch||0);
+
+  const badge = (val, posLabel, negLabel, unit='') => {
+    if(Math.abs(val)<1) return `<span class="delta-badge delta-flat">変化なし</span>`;
+    const cls = val>0?'delta-up':'delta-down';
+    const sign = val>0?'+':'';
+    const lbl = val>0?posLabel:negLabel;
+    return `<span class="delta-badge ${cls}">${lbl} ${sign}${Math.round(Math.abs(val)).toLocaleString('ja-JP')}${unit}</span>`;
+  };
+
+  block.style.display='block';
+  block.innerHTML=`
+    <div class="delta-row">
+      <span class="delta-lbl">前回（${last.savedAt}）との比較：</span>
+      ${badge(takeDiff,'手取り▲','手取り▼','円')}
+      ${S.jikyuM>0&&last.jikyu>0?badge(jikyuPct,'時給▲','時給▼','%'):''}
+      ${badge(goalDiff,'目標達成率▲','目標達成率▼','pt')}
+    </div>`;
+}
+
+/* ── Monthly review flow ── */
+function startMonthlyReview() {
+  const hist = getHistory();
+  const hasHistory = hist.length > 0;
+  if(hasHistory){
+    const last = hist[0];
+    const msg = `前回（${last.savedAt}）のシミュレーションをベースに\n今月の数字に更新しましょう。\n\n前回の手取り: ${fmt(last.takehome)}\n\n現在の入力を復元しますか？`;
+    if(confirm(msg)) { restoreSnapshot(last.id); }
+  } else {
+    showToast('💡 まず今月の数字を入力して「保存する」を押してください');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const existing = document.querySelector('.restore-toast');
+  if(existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'restore-toast';
+  t.innerHTML = `<span>${msg}</span><button class="toast-btn" onclick="this.parentElement.remove()">閉じる</button>`;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.classList.add('hide'); setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+function escHtml(s){ return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ──────── INIT ──────── */
+updateEdu('company');
+updateSocPanel(0, 0);
+
+// Restore persisted state (auto-saves inputs & user type)
+const wasRestored = loadPersistedState();
+if(wasRestored) {
+  updateEdu(userType);
+  updateSocPanel(0,0);
+  showToast('🔄 前回の状態を自動復元しました');
+}
+
+calc();
+renderHistory();
+
+// Update hdr badge to v7
+const badge = document.querySelector('.hdr-badge');
+if(badge) badge.textContent = 'v7 · 継続利用対応版';
+</script>
+</body>
+</html>
