@@ -375,15 +375,89 @@ body {
 /* ════════════════════════════════
    GRAPH
 ════════════════════════════════ */
-.bars { display: flex; align-items: flex-end; justify-content: center; gap: clamp(10px,3vw,28px); height: 130px; margin-bottom: 8px; }
-.bc2 { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; max-width: 90px; }
-.bo { width: 100%; max-width: 64px; height: 110px; background: var(--bg2); border-radius: 6px 6px 3px 3px; display: flex; align-items: flex-end; overflow: hidden; }
-.bi { width: 100%; border-radius: 4px 4px 2px 2px; transition: height .5s cubic-bezier(.34,1.2,.64,1); min-height: 3px; }
+/* ── GRAPH (fixed layout, no overlap) ── */
+.graph-wrap { padding: 0; }
+.bars {
+  display: flex;
+  align-items: flex-end;        /* bars grow upward from baseline */
+  justify-content: center;
+  gap: clamp(16px,4vw,40px);
+  height: 140px;                /* fixed bar area height */
+  margin: 0 8px 0;
+  position: relative;
+}
+.bc2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 100px;
+  height: 100%;               /* fill bar area */
+  justify-content: flex-end;  /* bar sticks to bottom */
+  gap: 0;
+}
+.bo {
+  width: 100%;
+  max-width: 72px;
+  background: var(--bg2);
+  border-radius: 6px 6px 3px 3px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  flex-shrink: 0;             /* don't shrink */
+}
+/* bar fills from bottom */
+.bi {
+  width: 100%;
+  border-radius: 4px 4px 2px 2px;
+  transition: height .5s cubic-bezier(.34,1.2,.64,1);
+  min-height: 3px;
+}
 .bi-inc  { background: linear-gradient(180deg,#4ade80,#15774a); }
 .bi-tax  { background: linear-gradient(180deg,#ff6040,#bf3318); }
 .bi-take { background: linear-gradient(180deg,#60b4ff,#1348a0); }
-.bgv { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600; text-align: center; }
-.bgn { font-size: 9px; color: var(--ink-60); }
+
+/* value labels: fixed row ABOVE bars */
+.graph-vals {
+  display: flex;
+  justify-content: center;
+  gap: clamp(16px,4vw,40px);
+  margin: 0 8px 6px;
+}
+.graph-val-cell {
+  flex: 1;
+  max-width: 100px;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(10px,2.5vw,12px);
+  font-weight: 600;
+  line-height: 1.3;
+  min-height: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* label row BELOW bars */
+.graph-lbls {
+  display: flex;
+  justify-content: center;
+  gap: clamp(16px,4vw,40px);
+  margin: 6px 8px 0;
+}
+.graph-lbl-cell {
+  flex: 1;
+  max-width: 100px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--ink-60);
+  line-height: 1.4;
+}
+
+/* remove old bgv/bgn (kept for compat but hidden by new structure) */
+.bgv { display: none !important; }
+.bgn { display: none !important; }
+
 .rbar { margin-top: 6px; }
 .rbar-lbl { display: flex; justify-content: space-between; font-size: 9px; color: var(--ink-60); margin-bottom: 3px; }
 .rbar-track { height: 6px; background: var(--bdr); border-radius: 99px; overflow: hidden; display: flex; }
@@ -419,21 +493,185 @@ body {
 .wfr-placeholder { font-size: 11px; color: var(--ink-30); text-align: center; padding: 8px; }
 
 /* ════════════════════════════════
-   UNIT PRICE
+   ACTION ENGINE v2 — 意思決定確定UI
 ════════════════════════════════ */
-.unit-box { background: linear-gradient(135deg,var(--grn-l),#f0fff8); border: 1.5px solid var(--grn-m); border-radius: var(--r); padding: 15px; }
-.unit-ttl { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--grn); margin-bottom: 12px; }
-.unit-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 11px; }
-.unit-c { background: #fff; border-radius: 9px; padding: 12px; }
-.unit-c.min { border: 1px solid var(--red-m); }
-.unit-c.rec { border: 1px solid var(--grn-m); }
-.ubadge { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; margin-bottom: 6px; }
-.ubadge-min { background: var(--red-l); color: var(--red); }
-.ubadge-rec { background: var(--grn-l); color: var(--grn); }
-.unit-val { font-family: 'Syne', sans-serif; font-size: clamp(20px,5vw,26px); font-weight: 900; }
-.unit-val.red { color: var(--red); } .unit-val.grn { color: var(--grn); }
-.unit-sub { font-size: 9px; color: var(--ink-30); margin-top: 3px; }
-.unit-why { font-size: 11px; color: var(--ink-60); line-height: 1.6; border-top: 1px solid var(--grn-m); padding-top: 10px; }
+.action-engine {
+  border-radius: var(--r); overflow: hidden;
+  border: 2px solid var(--bdr); margin-bottom: 10px;
+  box-shadow: var(--sh-md);
+}
+.ae-go    { border-color: var(--grn-m); }
+.ae-caution{ border-color: var(--amb-m); }
+.ae-stop  { border-color: var(--red-m); }
+
+/* ── A. 結論バンド（最上部・最大フォント）── */
+.ae-conclusion {
+  padding: 16px 18px 14px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+/* GO: やるべき → 緑背景・白文字 */
+.ae-go   .ae-conclusion { background: var(--grn); }
+/* STOP: やめるべき → 黒に近い赤・強烈 */
+.ae-stop .ae-conclusion { background: #160300; }
+
+.ae-eye {
+  font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 700;
+}
+.ae-go   .ae-eye { color: rgba(255,255,255,.55); }
+.ae-stop .ae-eye { color: rgba(255,100,60,.65); }
+
+.ae-verdict-main {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(15px,3.8vw,20px); font-weight: 900; line-height: 1.3;
+}
+.ae-go   .ae-verdict-main { color: #fff; }
+.ae-stop .ae-verdict-main { color: #ff6040; }
+
+.ae-verdict-sub {
+  font-size: 11px; font-weight: 500; line-height: 1.5; margin-top: 2px;
+}
+.ae-go   .ae-verdict-sub { color: rgba(255,255,255,.7); }
+.ae-stop .ae-verdict-sub { color: rgba(255,140,100,.6); }
+
+/* ── B. 数値行（3列・完全揃え）── */
+.ae-nums {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--bdr); border-bottom: 1px solid var(--bdr);
+}
+.ae-num {
+  padding: 14px 10px; text-align: center;
+  border-right: 1px solid var(--bdr);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.ae-num:last-child { border-right: none; }
+.ae-num-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--ink-60);
+  white-space: nowrap;
+}
+.ae-num-val {
+  font-family: 'DM Mono', monospace;   /* ← Monoで幅が安定する */
+  font-size: clamp(14px,3.2vw,18px); font-weight: 600;
+  line-height: 1; white-space: nowrap;
+}
+.ae-num-val.curr { color: var(--ink); }
+.ae-num-val.need { color: var(--blu); }
+.ae-num-val.diff-pos { color: var(--grn); }
+.ae-num-val.diff-neg { color: var(--red); }
+.ae-num-val.diff-amb { color: var(--amb); }
+.ae-num-sub {
+  font-size: 9px; color: var(--ink-30); text-align: center; line-height: 1.3;
+}
+.ae-mult {
+  display: inline-flex; align-items: center;
+  font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  white-space: nowrap;
+}
+.ae-mult.easy { background: var(--grn-l); color: var(--grn); }
+.ae-mult.med  { background: var(--amb-l); color: var(--amb); }
+.ae-mult.hard { background: #f0eaff;      color: var(--pur); }
+.ae-mult.stop { background: var(--red-l); color: var(--red); }
+
+/* ── C. ギャップバー ── */
+.ae-gap-bar-wrap {
+  padding: 10px 16px 12px; border-bottom: 1px solid var(--bdr);
+}
+.ae-gap-bar-lbl {
+  display: flex; justify-content: space-between;
+  font-size: 9px; font-family: 'DM Mono',monospace; color: var(--ink-60); margin-bottom: 5px;
+}
+.ae-gap-track {
+  height: 10px; background: var(--bdr); border-radius: 99px;
+  overflow: hidden; position: relative;
+}
+.ae-gap-curr { height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.34,1.2,.64,1); }
+.ae-gap-need-marker {
+  position: absolute; top: -2px; height: 14px; width: 2px;
+  background: var(--blu); border-radius: 1px;
+  transition: left .5s cubic-bezier(.34,1.2,.64,1);
+}
+.ae-gap-need-marker::after {
+  content: '目標'; position: absolute; top: -14px; left: 50%;
+  transform: translateX(-50%); font-size: 8px; color: var(--blu); font-weight: 700; white-space: nowrap;
+}
+
+/* ── D. 理由（簡潔・1〜2行）── */
+.ae-reason {
+  padding: 10px 16px; border-bottom: 1px solid var(--bdr);
+  font-size: 11px; color: var(--ink-60); line-height: 1.65;
+}
+.ae-reason strong { color: var(--ink); font-weight: 700; }
+
+/* ── E. 最優先アクション（1枚・大きく）── */
+.ae-primary {
+  margin: 12px 14px 8px;
+  border-radius: 10px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+  border: 2px solid;
+}
+.ae-primary.go   { background: var(--grn-l); border-color: var(--grn); }
+.ae-primary.caut { background: var(--amb-l); border-color: var(--amb); }
+.ae-primary.stop { background: var(--red-l); border-color: var(--red); }
+
+.ae-primary-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 5px; margin-bottom: 2px;
+}
+.ae-primary.go   .ae-primary-badge { color: var(--grn); }
+.ae-primary.caut .ae-primary-badge { color: var(--amb); }
+.ae-primary.stop .ae-primary-badge { color: var(--red); }
+
+.ae-primary-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(14px,3.5vw,17px); font-weight: 900; line-height: 1.3;
+}
+.ae-primary.go   .ae-primary-title { color: var(--grn); }
+.ae-primary.caut .ae-primary-title { color: var(--amb); }
+.ae-primary.stop .ae-primary-title { color: var(--red); }
+
+.ae-primary-desc { font-size: 11px; color: var(--ink-60); line-height: 1.5; }
+.ae-primary-cta {
+  align-self: flex-start; margin-top: 4px;
+  padding: 8px 18px; border-radius: 8px; border: none;
+  font-size: 12px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer; transition: all .15s;
+}
+.ae-primary.go   .ae-primary-cta { background: var(--grn); color: #fff; }
+.ae-primary.caut .ae-primary-cta { background: var(--amb); color: #fff; }
+.ae-primary.stop .ae-primary-cta { background: var(--red); color: #fff; }
+.ae-primary-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* ── F. 代替案リスト（小さめ）── */
+.ae-alts { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+.ae-alts-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--ink-30); margin-bottom: 2px; padding-top: 4px;
+}
+.ae-alt {
+  display: flex; gap: 9px; align-items: flex-start;
+  padding: 8px 11px; border-radius: 7px;
+  font-size: 11px; line-height: 1.5;
+  border: 1px solid var(--bdr); background: var(--sur2);
+  transition: background .15s;
+}
+.ae-alt:hover { background: var(--sur); }
+.ae-alt-icon  { flex-shrink: 0; font-size: 13px; margin-top: 1px; }
+.ae-alt-title { font-weight: 700; font-size: 11px; margin-bottom: 1px; }
+.ae-alt-desc  { font-size: 10px; color: var(--ink-60); }
+.ae-alt-btn {
+  display: inline-flex; align-items: center; gap: 3px; margin-top: 4px;
+  font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  border: none; cursor: pointer; font-family: 'Noto Sans JP', sans-serif;
+}
+.ae-alt-btn.grn { background: var(--grn); color: #fff; }
+.ae-alt-btn.blu { background: var(--blu); color: #fff; }
+.ae-alt-btn.amb { background: var(--amb); color: #fff; }
+.ae-alt-btn.red { background: var(--red); color: #fff; }
+
+/* Legacy */
+.unit-box { display: none; }
+
+
 
 /* ════════════════════════════════
    ACTION TOOLS (モーダル)
@@ -535,8 +773,88 @@ body {
 .fn strong { color: var(--amb); }
 
 /* ════════════════════════════════
-   PERSISTENCE / HISTORY
+   STORY BANNER（最初の一撃）
 ════════════════════════════════ */
+.story-banner {
+  background: linear-gradient(135deg, #0f0d0b 0%, #1a120a 100%);
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.story-inner { max-width: 760px; margin: 0 auto; }
+.story-hook {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(14px, 3.5vw, 18px);
+  font-weight: 700;
+  color: rgba(255,255,255,.75);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.story-num {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(16px, 4vw, 22px);
+  font-weight: 600;
+  color: #fff;
+}
+.story-num.story-real {
+  color: #4ade80;
+}
+.story-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,.4);
+  line-height: 1.5;
+}
+.story-sub span {
+  color: #ff7055;
+  font-weight: 700;
+}
+
+/* ════════════════════════════════
+   VERDICT — 2択断言スタイル強化
+════════════════════════════════ */
+/* GO: やるべき */
+.vt-go .vt-head { background: var(--grn); }
+.vt-go .vt-ttl  { color: #fff; font-size: clamp(15px,4vw,20px); }
+.vt-go .vt-eye  { color: rgba(255,255,255,.6); }
+.vt-go .vt-body { background: var(--grn-l); }
+.vt-go .vt-icon { color: #fff; }
+
+/* STOP: やめるべき */
+.vt-stop .vt-head { background: var(--red); }
+.vt-stop .vt-ttl  { color: #fff; font-size: clamp(15px,4vw,20px); }
+.vt-stop .vt-eye  { color: rgba(255,255,255,.6); }
+.vt-stop .vt-body { background: var(--red-l); }
+.vt-stop .vt-icon { color: #fff; }
+
+/* COND: 条件付き（cautionを完全に廃止・condに置換） */
+.vt-cond .vt-head { background: #2a1f00; }
+.vt-cond .vt-ttl  { color: #f5c842; font-size: clamp(15px,4vw,20px); }
+.vt-cond .vt-eye  { color: rgba(255,255,255,.5); }
+.vt-cond .vt-body { background: #fffbec; }
+
+/* 条件ボックス（cond判定の条件リスト）*/
+.vt-cond-conditions {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(245,200,66,.12);
+  border: 1px solid rgba(245,200,66,.3);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #5a3d00;
+  line-height: 1.7;
+}
+.vt-cond-conditions strong { color: #3a2600; font-weight: 700; }
+
+/* 判定バッジ */
+.vt-verdict-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 99px;
+  margin-bottom: 6px;
+}
+.vt-go   .vt-verdict-badge { background: rgba(255,255,255,.2); color: #fff; }
+.vt-stop .vt-verdict-badge { background: rgba(255,255,255,.2); color: #fff; }
+.vt-cond .vt-verdict-badge { background: rgba(245,200,66,.25); color: #7a5000; }
+
 
 /* Save banner */
 .save-banner {
@@ -645,17 +963,30 @@ body {
       <div class="hdr-logo">🧠</div>
       <div>
         <div class="hdr-title">副業意思決定OS</div>
-        <div class="hdr-sub">Freelance Decision Engine</div>
+        <div class="hdr-sub">会社員×副業 — やるべきか、やめるべきかを決める</div>
       </div>
     </div>
-    <div class="hdr-badge">v6 · 税務信頼性強化版</div>
+    <div class="hdr-badge">v8 · 意思決定特化版</div>
   </div>
 </div>
+
+<!-- ストーリーバナー（致命②：最初の一撃） -->
+<div class="story-banner">
+  <div class="story-inner">
+    <div class="story-hook" id="story-hook">
+      月 <span class="story-num" id="story-side-gross">¥80,000</span> 稼いでも、実際に増えるのは
+      <span class="story-num story-real" id="story-real">¥約56,000</span> だけです
+    </div>
+    <div class="story-sub">残りの<span id="story-pct">30%</span>は税金で消えます — 今すぐ正確な数字を確認してください</div>
+  </div>
+</div>
+
+<!-- ユーザータイプ（致命③：ターゲットを絞る） -->
 <div class="utype-wrap">
   <div class="utype">
-    <button class="ut on" onclick="setUT('company')">👔 会社員</button>
-    <button class="ut"    onclick="setUT('freelance')">💻 フリーランス</button>
-    <button class="ut"    onclick="setUT('beginner')">🌱 副業初心者</button>
+    <button class="ut on"  onclick="setUT('company')">👔 会社員（副業検討中）</button>
+    <button class="ut"     onclick="setUT('freelance')">💻 フリーランス</button>
+    <button class="ut"     onclick="setUT('beginner')">🌱 副業0〜1年目</button>
   </div>
 </div>
 
@@ -667,22 +998,20 @@ body {
   <span>本ツールは実務ロジックに基づく概算シミュレーションです（<strong>±10〜20%の誤差</strong>あり）。正確な税額は<strong>税理士または税務署・自治体</strong>にご確認ください。住民税は自治体により異なります。副業の所得区分（雑所得 / 事業所得）は状況により税務署の判断が異なります。</span>
 </div>
 
-<!-- ═══ ① 判定結果（最上部）═══ -->
-<div class="sec-lbl">① 判定結果</div>
+<!-- ═══ ① 判定結果（最上部・2択断言）═══ -->
+<div class="sec-lbl">① 判定結果 — やるべきか / やめるべきか</div>
 
-<div class="vt vt-caution" id="verdict-block">
+<div class="vt vt-pending" id="verdict-block">
   <div class="vt-head" id="vt-head">
-    <div class="vt-icon" id="v-icon">🟡</div>
+    <div class="vt-icon" id="v-icon">⏳</div>
     <div>
-      <div class="vt-eye">自分基準の判定（目標時給ベース）</div>
-      <div class="vt-ttl" id="v-title">この副業は「もう少しで黒字」—— 改善余地あり</div>
+      <div class="vt-eye">目標時給ベース × 税引後手取り × 機会損失 — 総合判定</div>
+      <div class="vt-ttl" id="v-title">副業収入を入力すると判定が出ます</div>
     </div>
   </div>
-  <div class="vt-body" id="v-body">
-    <div class="vt-r"><span class="vt-ri">📊</span><span>実質時給 ¥1,200/h は目標の80%。あと一歩。</span></div>
-    <div class="vt-r"><span class="vt-ri">🎯</span><span>単価を ¥1,875/h に引き上げると目標達成できます。</span></div>
-  </div>
+  <div class="vt-body" id="v-body"></div>
 </div>
+
 
 <!-- ═══ ② 入力 ═══ -->
 <div class="sec-lbl">② 入力</div>
@@ -893,18 +1222,36 @@ body {
 
 <div class="card">
   <div class="card-ttl">収入（税引前）/ 税負担 / 手取り（税引後）</div>
-  <div class="bars">
-    <div class="bc2"><div class="bgv" style="color:var(--grn);" id="gv-inc">¥5,160,000</div>
-      <div class="bo"><div class="bi bi-inc" id="gb-inc" style="height:72%"></div></div>
-      <div class="bgn">総収入<br><span style="font-size:8px;">（税引前）</span></div></div>
-    <div class="bc2"><div class="bgv" style="color:var(--red);" id="gv-tax">-¥1,014,000</div>
-      <div class="bo"><div class="bi bi-tax" id="gb-tax" style="height:20%"></div></div>
-      <div class="bgn">税・保険</div></div>
-    <div class="bc2"><div class="bgv" style="color:var(--blu);" id="gv-take">¥3,716,000</div>
-      <div class="bo"><div class="bi bi-take" id="gb-take" style="height:52%"></div></div>
-      <div class="bgn">手取り<br><span style="font-size:8px;">（税引後）</span></div></div>
+
+  <!-- ① 数値ラベル行（バーの上・固定） -->
+  <div class="graph-vals">
+    <div class="graph-val-cell" style="color:var(--grn);" id="gv-inc">¥5,160,000</div>
+    <div class="graph-val-cell" style="color:var(--red);" id="gv-tax">-¥1,014,000</div>
+    <div class="graph-val-cell" style="color:var(--blu);" id="gv-take">¥3,716,000</div>
   </div>
-  <div class="rbar">
+
+  <!-- ② バー行（固定高さ・下揃え） -->
+  <div class="bars">
+    <div class="bc2">
+      <div class="bo" style="height:120px;"><div class="bi bi-inc" id="gb-inc" style="height:72%"></div></div>
+    </div>
+    <div class="bc2">
+      <div class="bo" style="height:120px;"><div class="bi bi-tax" id="gb-tax" style="height:20%"></div></div>
+    </div>
+    <div class="bc2">
+      <div class="bo" style="height:120px;"><div class="bi bi-take" id="gb-take" style="height:52%"></div></div>
+    </div>
+  </div>
+
+  <!-- ③ 凡例ラベル行（バーの下・固定） -->
+  <div class="graph-lbls">
+    <div class="graph-lbl-cell">総収入<br><span style="font-size:8px;color:var(--ink-30)">（税引前）</span></div>
+    <div class="graph-lbl-cell">税・保険</div>
+    <div class="graph-lbl-cell">手取り<br><span style="font-size:8px;color:var(--ink-30)">（税引後）</span></div>
+  </div>
+
+  <!-- ④ 比率バー -->
+  <div class="rbar" style="margin-top:10px;">
     <div class="rbar-lbl"><span>税負担率 <span id="rbt-p">19.7%</span></span><span>手取り率 <span id="rbk-p">72%</span></span></div>
     <div class="rbar-track"><div class="rbt" id="rbt" style="width:19.7%"></div><div class="rbk" id="rbk" style="width:72%"></div></div>
   </div>
@@ -947,25 +1294,76 @@ body {
   </div>
 </div>
 
-<!-- ═══ ⑥ 単価逆算 ═══ -->
-<div class="sec-lbl">⑥ 単価逆算</div>
+<!-- ═══ ⑥ 改善アクション ═══ -->
+<div class="sec-lbl">⑥ 改善アクション（どうすればいいか）</div>
 
-<div class="unit-box">
-  <div class="unit-ttl">🎯 目標時給から逆算した単価</div>
-  <div class="unit-g">
-    <div class="unit-c min">
-      <div class="ubadge ubadge-min">最低ライン</div>
-      <div class="unit-val red" id="u-min">¥875/h</div>
-      <div class="unit-sub" id="u-min-sub">経費・税増分を回収できる最低単価</div>
+<div class="action-engine ae-caution" id="ae-block">
+
+  <!-- A. 結論（最上部・断言） -->
+  <div class="ae-conclusion" id="ae-conclusion">
+    <div class="ae-eye">単価ギャップ診断 — 意思決定</div>
+    <div class="ae-verdict-main" id="ae-verdict">副業収入・稼働時間を入力してください</div>
+    <div class="ae-verdict-sub" id="ae-verdict-sub"></div>
+  </div>
+
+  <!-- B. 数値行（DM Mono で幅を揃える） -->
+  <div class="ae-nums">
+    <div class="ae-num">
+      <div class="ae-num-lbl">現在の単価</div>
+      <div class="ae-num-val curr" id="ae-curr">—</div>
+      <div class="ae-num-sub">時給換算・税引前</div>
     </div>
-    <div class="unit-c rec">
-      <div class="ubadge ubadge-rec">推奨単価</div>
-      <div class="unit-val grn" id="u-rec">¥1,875/h</div>
-      <div class="unit-sub" id="u-rec-sub">目標時給¥1,500/hを達成できる単価</div>
+    <div class="ae-num">
+      <div class="ae-num-lbl">必要単価</div>
+      <div class="ae-num-val need" id="ae-need">—</div>
+      <div class="ae-num-sub">目標時給達成に必要</div>
+    </div>
+    <div class="ae-num">
+      <div class="ae-num-lbl">差分・倍率</div>
+      <div class="ae-num-val" id="ae-diff-val">—</div>
+      <div class="ae-mult" id="ae-mult">—</div>
     </div>
   </div>
-  <div class="unit-why" id="unit-why">副業収入・稼働時間を入力すると根拠が表示されます。</div>
+
+  <!-- C. ギャップバー -->
+  <div class="ae-gap-bar-wrap">
+    <div class="ae-gap-bar-lbl">
+      <span id="ae-bar-curr-lbl">現在 —</span>
+      <span id="ae-bar-need-lbl">必要 —</span>
+    </div>
+    <div class="ae-gap-track">
+      <div class="ae-gap-curr" id="ae-gap-fill" style="width:0%"></div>
+      <div class="ae-gap-need-marker" id="ae-gap-marker" style="left:80%"></div>
+    </div>
+  </div>
+
+  <!-- D. 理由（1〜2行） -->
+  <div class="ae-reason" id="ae-reason">
+    副業収入と稼働時間を入力すると診断が表示されます。
+  </div>
+
+  <!-- E. 最優先アクション（1枚・大きく） -->
+  <div class="ae-primary stop" id="ae-primary">
+    <div class="ae-primary-badge" id="ae-primary-badge">⚡ 最優先アクション</div>
+    <div class="ae-primary-title" id="ae-primary-title">入力してください</div>
+    <div class="ae-primary-desc" id="ae-primary-desc"></div>
+    <div id="ae-primary-cta-wrap"></div>
+  </div>
+
+  <!-- F. 代替案（小さめ） -->
+  <div class="ae-alts" id="ae-alts">
+    <div class="ae-alts-lbl">その他の選択肢</div>
+  </div>
+
 </div>
+
+<!-- 旧ブロック互換 -->
+<div style="display:none;">
+  <span id="u-min"></span><span id="u-min-sub"></span>
+  <span id="u-rec"></span><span id="u-rec-sub"></span>
+  <span id="unit-why"></span>
+</div>
+
 
 <!-- ═══ ⑦ 行動ツール ═══ -->
 <div class="sec-lbl">⑦ 行動ツール — 今すぐ使える</div>
@@ -1341,6 +1739,14 @@ function calc() {
   if(sideY>0&&hrs>0){
     const sm=Math.round(sideY/12), tm=Math.round(taxInc/12), pct=Math.round(taxRate);
     $('emo-box').innerHTML=`月 <strong>${fmt(sm)}</strong>（税引前）稼いでも → 税負担増は月 <strong>約${fmt(tm)}</strong>（副業収入の<strong>${pct}%</strong>）です`;
+    // ── Story banner update ──
+    const storyReal = Math.round(sm - tm);
+    const storyEl = $('story-hook');
+    if(storyEl) {
+      $('story-side-gross').textContent = fmt(sm);
+      $('story-real').textContent = fmt(storyReal);
+      $('story-pct').textContent = pct+'%';
+    }
   } else {
     $('emo-box').textContent='副業収入・稼働時間を入力すると税の実態が表示されます';
   }
@@ -1428,19 +1834,9 @@ function calc() {
   set('imp-txrate', Math.round(taxRate)+'%');
   set('imp-bep',    hrs>0&&bepH>0?fmt(bepH)+'/h':'—');
 
-  /* ── Unit price ── */
-  set('u-min', hrs>0&&minUnit>0?fmt(minUnit)+'/h':'—');
-  set('u-min-sub', hrs>0?`月${hrs}h稼働で経費・税増分を回収できる最低単価`:'稼働時間を入力');
-  set('u-rec', hrs>0?fmt(recUnit)+'/h':'—');
-  set('u-rec-sub', hrs>0?`目標時給${fmt(goalH)}/h を達成できる推奨単価`:'稼働時間を入力');
-  if(hrs>0&&sideY>0){
-    const currH=Math.round(sideY/12/hrs);
-    $('unit-why').innerHTML=`現在の単価は約<strong>${fmt(currH)}/h</strong>（税引前）、実質時給は<strong>${fmt(jikyuM)}/h</strong>（税引後）。`+
-      `目標達成には<strong>${fmt(recUnit)}/h</strong>への値上げ（+${fmt(recUnit-currH)}）が必要です。`+
-      `限界税率${(mr*100).toFixed(0)}%（所得税）＋住民税10%＝<strong>合計税率約${(combRate*100).toFixed(0)}%</strong>を考慮した逆算値です。`;
-  } else {
-    $('unit-why').textContent='副業収入・稼働時間を入力すると根拠が表示されます。';
-  }
+  /* ── Action Engine (⑥ 改善アクション) ── */
+  updateActionEngine({ hrs, sideY, goalH, jikyuM, goalAch, recUnit, minUnit,
+    takeDiff, taxRate, mr, combRate, expY, itype, withR });
 
   /* ── Alerts ── */
   updateAlerts({sideY,taxRate,taxInc,takeDiff,jikyuM,goalH,hrs,expY,itype,withR,withoutR});
@@ -1456,6 +1852,228 @@ function calc() {
   renderDelta();
   maybeShowSaveBanner();
 }
+
+/* ──────── ACTION ENGINE ──────── */
+function updateActionEngine({ hrs, sideY, goalH, jikyuM, goalAch, recUnit, minUnit,
+    takeDiff, taxRate, mr, combRate, expY, itype, withR }) {
+
+  const block       = $('ae-block');
+  const verdictEl   = $('ae-verdict');
+  const subEl       = $('ae-verdict-sub');
+  const reasonEl    = $('ae-reason');
+  const primaryEl   = $('ae-primary');
+  const primBadge   = $('ae-primary-badge');
+  const primTitle   = $('ae-primary-title');
+  const primDesc    = $('ae-primary-desc');
+  const primCtaWrap = $('ae-primary-cta-wrap');
+  const altsEl      = $('ae-alts');
+  if(!block) return;
+
+  /* ─ 未入力 ─ */
+  if(!sideY || !hrs) {
+    block.className='action-engine ae-stop';
+    verdictEl.textContent='副業収入・稼働時間を入力してください';
+    subEl.textContent='';
+    set('ae-curr','—'); set('ae-need','—'); set('ae-diff-val','—');
+    $('ae-mult').textContent='—'; $('ae-mult').className='ae-mult';
+    $('ae-gap-fill').style.width='0%';
+    $('ae-gap-marker').style.left='80%';
+    $('ae-bar-curr-lbl').textContent='現在 —';
+    $('ae-bar-need-lbl').textContent='必要 —';
+    reasonEl.textContent='副業収入と稼働時間を入力すると診断が表示されます。';
+    primaryEl.className='ae-primary stop';
+    primBadge.innerHTML='';
+    primTitle.textContent='まず数字を入力してください';
+    primDesc.textContent='';
+    primCtaWrap.innerHTML='';
+    altsEl.innerHTML='<div class="ae-alts-lbl">その他の選択肢</div>';
+    return;
+  }
+
+  const currH = Math.round(sideY / 12 / hrs);
+  const needH = recUnit;
+  const diffH = needH - currH;
+  const ratio = currH > 0 ? needH / currH : 999;
+
+  /* ─ B. 数値行 ─ */
+  set('ae-curr', fmt(currH)+'/h');
+  set('ae-need', fmt(needH)+'/h');
+  $('ae-bar-curr-lbl').textContent = '現在 '+fmt(currH)+'/h';
+  $('ae-bar-need-lbl').textContent = '必要 '+fmt(needH)+'/h';
+
+  const diffEl = $('ae-diff-val');
+  diffEl.textContent = diffH<=0 ? '達成済み' : '+'+fmt(diffH)+'/h';
+  diffEl.className   = 'ae-num-val '+(diffH<=0?'diff-pos':ratio<=2?'diff-pos':ratio<=5?'diff-amb':'diff-neg');
+
+  const multEl = $('ae-mult');
+  if(diffH <= 0) {
+    multEl.textContent='✅ 目標達成';              multEl.className='ae-mult easy';
+  } else if(ratio <= 2) {
+    multEl.textContent=`約${ratio.toFixed(1)}倍 — 交渉で改善可能`; multEl.className='ae-mult easy';
+  } else if(ratio <= 5) {
+    multEl.textContent=`約${ratio.toFixed(1)}倍 — 厳しい水準`;   multEl.className='ae-mult med';
+  } else if(ratio <= 10) {
+    multEl.textContent=`約${ratio.toFixed(0)}倍 — 構造的に厳しい`; multEl.className='ae-mult hard';
+  } else {
+    multEl.textContent=`約${ratio.toFixed(0)}倍 — 構造的に無理`;  multEl.className='ae-mult stop';
+  }
+
+  /* ─ C. ギャップバー ─ */
+  const maxB = Math.max(needH*1.05, currH*1.05, 1);
+  const cPct = Math.min(currH/maxB*100, 100);
+  const nPct = Math.min(needH/maxB*100, 100);
+  const gf = $('ae-gap-fill');
+  gf.style.width      = cPct + '%';
+  gf.style.background = diffH<=0?'var(--grn)':ratio<=2?'var(--amb)':'var(--red)';
+  const gm = $('ae-gap-marker');
+  if(gm) gm.style.left = nPct + '%';
+
+  /* ════════════════════════════════════════
+     判定ロジック — 実質2択に絞る
+     ─ GO   : やるべき（達成済み or ≦2倍）
+     ─ COND : このままでは続けると損。条件付き
+     ─ STOP : やめるべき（構造的に無理）
+  ════════════════════════════════════════ */
+  let blockCls, verdict, sub, reason, primary, alts=[];
+
+  /* ────────────────────────
+     ✅ GO — やるべき
+  ──────────────────────── */
+  if(diffH <= 0) {
+    blockCls = 'ae-go';
+    verdict  = '✅ この副業はやるべきです — 目標時給をクリアしています';
+    sub      = `現在 ${fmt(currH)}/h で目標 ${fmt(goalH)}/h を達成（${goalAch.toFixed(0)}%）。続ける合理的な根拠があります。`;
+    reason   = `目標時給をクリアしており、<strong>手取りが年${fmt(takeDiff)}増加</strong>しています。このまま継続しながら単価の追加引き上げを狙うのが最善です。`;
+    primary  = {
+      cls:'go',
+      badge:'🚀 最優先アクション',
+      title:`単価を ${fmt(Math.round(currH*1.2))}/h へ引き上げる（今すぐ交渉）`,
+      desc:`+20%の値上げで年手取りがさらに約${fmt(Math.max(0,takeDiff)*0.2)}増加。達成済みの今が最も交渉しやすいタイミングです。`,
+      ctaLabel:'交渉テンプレを今すぐ使う', ctaFn:`openModal('modal-nego')`
+    };
+    alts = [
+      { icon:'💰', title:'iDeCoで節税しながら資産形成する',
+        desc:`月2〜5万円の掛金で実質手取りを最大化`,
+        btnLabel:'節税シミュ', btnFn:`openModal('modal-ideco')`, btnCls:'blu' },
+      { icon:'⏱️', title:`稼働時間を増やす（月${hrs}h → ${Math.min(hrs+10,60)}h）`,
+        desc:`単価を維持したまま稼働を増やすと年手取りが約${fmt(Math.max(0,takeDiff/hrs*10))}追加増加` },
+    ];
+
+  /* ────────────────────────
+     🟡 GO（条件付き）— 交渉で届く ≦2倍
+     「改善余地あり」は廃止。「今すぐ交渉しなければ続ける意味が薄い」と断言。
+  ──────────────────────── */
+  } else if(ratio <= 2) {
+    blockCls = 'ae-go';   /* 緑 — ただし行動前提 */
+    verdict  = `✅ やるべきです — ただし今すぐ単価交渉が必須条件`;
+    sub      = `現在 ${fmt(currH)}/h、必要 ${fmt(needH)}/h（約${ratio.toFixed(1)}倍）。交渉なしで続けるのは時間の無駄です。`;
+    reason   = `このギャップは<strong>単価交渉だけで埋まります</strong>。しかし交渉せずに続ければ、毎月<strong>${fmt(diffH*hrs)}の機会損失</strong>が積み上がります。やるなら今日中に動いてください。`;
+    primary  = {
+      cls:'go',
+      badge:'⚡ 最優先アクション — 今日中にやること',
+      title:`今日中に単価交渉する — 目標 ${fmt(needH)}/h`,
+      desc:`${fmt(currH)}/h → ${fmt(needH)}/h。差額は+${fmt(diffH)}/hだけです。テンプレートを使えば10分で交渉文が完成します。`,
+      ctaLabel:'交渉テンプレを今すぐ開く', ctaFn:`openModal('modal-nego')`
+    };
+    alts = [
+      { icon:'🧾', title:'経費を増やして手取りを改善する',
+        desc:`月+1万円の経費計上で実質時給が約${fmt(Math.round(10000*12*(1-combRate)/12/Math.max(hrs,1)))}/h改善`,
+        btnLabel:'経費チェックリスト', btnFn:`openModal('modal-exp')`, btnCls:'blu' },
+      { icon:'⏱️', title:'稼働時間を減らして実質単価を上げる',
+        desc:`月${hrs}h → ${Math.max(hrs-5,5)}hに削り同収入を維持すれば時間コストが下がる` },
+    ];
+
+  /* ────────────────────────
+     🔴 COND — このままでは損。3〜10倍
+     「続けると損する可能性が高い」と断言。
+  ──────────────────────── */
+  } else if(ratio <= 10) {
+    blockCls = 'ae-stop';
+    const isTough = ratio > 5;
+    verdict = `⛔ このままでは続けると損する可能性が高いです — ${isTough?'構造的に厳しい':'戦略変更が必要'}（${ratio.toFixed(1)}倍）`;
+    sub     = `現在 ${fmt(currH)}/h で目標達成には ${fmt(needH)}/h が必要。${isTough?'単価交渉・戦略変更では届きません。':'単価交渉だけでは届きません。'}`;
+    reason  = `差分<strong>約${ratio.toFixed(1)}倍</strong>は<strong>通常の交渉限界（2倍）を超えています</strong>。今の副業を同じ形で続けても目標には到達しません。「やり方を変える」か「やめる」か、どちらかを選んでください。`;
+    primary = {
+      cls:'stop',
+      badge:'⚡ 最優先アクション — どちらかを今すぐ決める',
+      title:isTough
+        ? 'この副業はやめて、高単価な仕事に切り替えてください'
+        : `提供サービスを再設計して単価 ${fmt(needH)}/h を実現する`,
+      desc:isTough
+        ? `${ratio.toFixed(1)}倍のギャップは時間をかけても埋まりません。同じ時間で高単価（${fmt(needH)}/h以上）の仕事をする方が合理的です。`
+        : `目標単価 ${fmt(needH)}/h を達成できる新しいサービス設計（専門性・ターゲット・提供形態）を3ヶ月以内に実行してください。`,
+      ctaLabel: isTough ? null : null
+    };
+    alts = [
+      { icon:'🎯', title:`目標時給を ${fmt(Math.round(currH*1.5))}/h（現実的な水準）に下げる`,
+        desc:'目標を段階的に設定することで、今すぐ行動できる状態になります' },
+      ...(isTough ? [] : [
+        { icon:'📊', title:'法人化で手取りを大幅改善する',
+          desc:'収入が一定以上なら法人化で実効税率を下げられます',
+          btnLabel:'法人化判定', btnFn:`openModal('modal-houjin')`, btnCls:'amb' },
+      ]),
+      { icon:'💰', title:'iDeCoで課税所得を減らす',
+        desc:'節税で実質手取りを改善。今すぐできる対策です',
+        btnLabel:'節税シミュ', btnFn:`openModal('modal-ideco')`, btnCls:'blu' },
+    ];
+
+  /* ────────────────────────
+     ⛔ STOP — やめるべき。10倍超
+  ──────────────────────── */
+  } else {
+    blockCls = 'ae-stop';
+    const ratioLabel = `${ratio.toFixed(0)}倍`;
+    verdict = `⛔ この副業はやめるべきです — 構造的に無理（${ratioLabel}）`;
+    sub     = `現在 ${fmt(currH)}/h、必要 ${fmt(needH)}/h。${ratioLabel}のギャップは、いかなる交渉・戦略変更でも埋まりません。`;
+    reason  = `<strong>これは構造的な問題です。</strong>月${hrs}h・${fmt(currH)}/hという設計では、どれだけ頑張っても目標手取りに到達しません。時間を無駄にする前に撤退を決断してください。`;
+    primary = {
+      cls:'stop',
+      badge:'⚡ 最優先アクション — 今すぐ決断する',
+      title:'この副業はやめるべきです',
+      desc:`${ratioLabel}のギャップは時間をかけても埋まりません。今この副業に使っている月${hrs}h・年${fmt(sideY)}分のリソースを、高単価な仕事または本業のスキルアップに移してください。`,
+      ctaLabel: null
+    };
+    alts = [
+      { icon:'🔄', title:`目標時給を ${fmt(Math.round(currH*0.85))}/h に現実的に設定し直す`,
+        desc:'現在の単価を前提に目標を組み直すと、今すぐ行動できる状態になります' },
+      { icon:'🚀', title:'高単価な副業カテゴリへ転換する',
+        desc:'コンサルティング・専門技術・BtoB向けサービスは同じ時間でも単価が大幅に異なります' },
+      { icon:'📊', title:`副業なしでも手取りは ${fmt(S.withoutR?.take||0)}/年`,
+        desc:'副業に使っている時間コストを考えると、副業なしの方が効率的な可能性があります' },
+    ];
+  }
+
+  /* ─ DOM 反映 ─ */
+  block.className        = `action-engine ${blockCls}`;
+  verdictEl.textContent  = verdict;
+  subEl.textContent      = sub;
+  reasonEl.innerHTML     = reason;
+
+  /* 最優先（1枚・大きく） */
+  primaryEl.className    = `ae-primary ${primary.cls}`;
+  primBadge.innerHTML    = `<span style="font-size:14px;margin-right:2px">${primary.cls==='go'?'🚀':'⚡'}</span>${primary.badge}`;
+  primTitle.textContent  = primary.title;
+  primDesc.textContent   = primary.desc;
+  primCtaWrap.innerHTML  = primary.ctaLabel
+    ? `<button class="ae-primary-cta" onclick="${primary.ctaFn}">${primary.ctaLabel} →</button>` : '';
+
+  /* 代替案（小さく・後ろに） */
+  altsEl.innerHTML = `<div class="ae-alts-lbl">その他の選択肢</div>` +
+    alts.map(a=>`
+      <div class="ae-alt">
+        <span class="ae-alt-icon">${a.icon}</span>
+        <div>
+          <div class="ae-alt-title">${a.title}</div>
+          <div class="ae-alt-desc">${a.desc}</div>
+          ${a.btnLabel?`<button class="ae-alt-btn ${a.btnCls}" onclick="${a.btnFn}">${a.btnLabel} →</button>`:''}
+        </div>
+      </div>`).join('');
+
+  /* compat */
+  set('u-min', fmt(minUnit)+'/h');
+  set('u-rec', fmt(needH)+'/h');
+}
+
 
 /* ──────── ALERTS ──────── */
 function updateAlerts({sideY,taxRate,taxInc,takeDiff,jikyuM,goalH,hrs,expY,itype,withR,withoutR}) {
@@ -1483,32 +2101,86 @@ function updateVerdict({takeDiff,sideY,taxRate,jikyuM,goalH,hrs,goalAch,recUnit,
   const block=$('verdict-block'), icon=$('v-icon'), title=$('v-title'), body=$('v-body');
   if(!sideY){
     block.className='vt vt-pending';
-    icon.textContent='⏳'; title.textContent='副業収入を入力すると判定が出ます';
-    body.innerHTML=''; return;
+    icon.textContent='⏳';
+    title.textContent='副業収入を入力すると「やるべきか / やめるべきか」が出ます';
+    body.innerHTML='';
+    return;
   }
-  let cls,ic,tx; const reasons=[];
-  if(takeDiff<0){
-    cls='stop';ic='⛔';tx='この副業は「やめるべき」—— 手取りが減少中';
-    reasons.push({i:'❌',t:`副業で手取りが年${fmt(Math.abs(takeDiff))}減少しています。`});
-    reasons.push({i:'💡',t:'単価交渉または経費計上で改善できる可能性があります。→ 行動ツールで解決策を確認してください。'});
-  } else if(goalAch<70){
-    cls='caution';ic='⚠️';tx='この副業は「条件改善が必要」—— 目標時給未達';
-    reasons.push({i:'📊',t:`実質時給${hrs>0?fmt(jikyuM)+'/h':'—'} は目標${fmt(goalH)}/h の${goalAch.toFixed(0)}%。`});
-    reasons.push({i:'🎯',t:`推奨単価 ${fmt(recUnit)}/h への値上げが最優先アクション。→ 交渉テンプレを使ってください。`});
-  } else if(goalAch>=100){
-    cls='go';ic='✅';tx='この副業は「やる価値あり」—— 目標時給クリア';
-    reasons.push({i:'✅',t:`実質時給${fmt(jikyuM)}/h で目標${fmt(goalH)}/h を達成しています。`});
-    if(taxRate>30) reasons.push({i:'⚠️',t:`副業の税率は${Math.round(taxRate)}%と高め。さらに単価を上げると税効率が改善します。`});
-    reasons.push({i:'🚀',t:`続けると5年で累計${fmt(Math.max(0,takeDiff)*5)}の手取り増。`});
+
+  /* ── 判定ロジック：caution廃止、3択→実質2択に ──
+     GO   : やるべき（目標達成 or 手取り増 + 合理的）
+     COND : やるなら条件付きのみ（改善すれば届く水準）
+     STOP : やめるべき（手取り減 or 構造的に無理）
+  */
+  const currH = hrs > 0 && sideY > 0 ? Math.round(sideY/12/hrs) : 0;
+  const ratio  = currH > 0 ? recUnit / currH : 999;
+
+  let cls, ic, tx, badge, reasons=[], conditions=[];
+
+  if(takeDiff < 0) {
+    /* ⛔ STOP: 手取りが減る → 迷う余地なし */
+    cls='stop'; ic='⛔'; badge='やめるべき';
+    tx='この副業は続けると手取りが減ります — 今すぐやめる判断を';
+    reasons.push({i:'❌', t:`副業をすることで年間手取りが<strong>${fmt(Math.abs(takeDiff))}</strong>減少します。稼いでいるのに損している状態です。`});
+    reasons.push({i:'💡', t:'単価を大幅に上げるか、この副業からは撤退することを推奨します。'});
+
+  } else if(goalAch >= 100 && takeDiff > 0) {
+    /* ✅ GO: 目標達成＋手取り増 → 明確にやるべき */
+    cls='go'; ic='✅'; badge='やるべき';
+    tx='この副業はやるべきです — 目標時給クリア・手取り増を確認';
+    reasons.push({i:'✅', t:`実質時給<strong>${fmt(jikyuM)}/h</strong>で目標<strong>${fmt(goalH)}/h</strong>を達成しています（${goalAch.toFixed(0)}%）。`});
+    reasons.push({i:'💰', t:`年間手取りが<strong>${fmt(takeDiff)}</strong>増加。5年継続で累計<strong>${fmt(takeDiff*5)}</strong>の差になります。`});
+    if(taxRate>30) reasons.push({i:'⚡', t:`副業の税負担率${Math.round(taxRate)}%は高め。単価をさらに上げると税効率が改善します。`});
+
+  } else if(ratio <= 2 && takeDiff > 0) {
+    /* 🟡 COND: 交渉で届く → 「条件付き実行」と断言 */
+    cls='cond'; ic='⚡'; badge='条件付きでのみ実行';
+    tx='このままではやる価値は低い。条件を満たせば実行してください';
+    reasons.push({i:'📊', t:`現状の実質時給<strong>${hrs>0?fmt(jikyuM)+'/h':'—'}</strong>は目標の<strong>${goalAch.toFixed(0)}%</strong>。条件なしでの継続は非推奨です。`});
+    conditions = [
+      `単価を今より<strong>+${fmt(recUnit-currH)}/h（${fmt(recUnit)}/h）</strong>に引き上げること`,
+      '引き上げできない場合は副業の種類・ターゲットを変更すること',
+      itype==='misc'&&sideY>400000 ? '副業が60万超なら事業所得（青色申告）への切り替えを検討すること' : null,
+    ].filter(Boolean);
+
+  } else if(ratio <= 5 && takeDiff > 0) {
+    /* 🔴 COND: 戦略変更が必要 → 「厳しい条件付き」 */
+    cls='cond'; ic='⚠️'; badge='条件付きでのみ実行（厳しい）';
+    tx='このままではやる価値は低い。戦略の大幅変更が条件です';
+    reasons.push({i:'⚠️', t:`現在単価<strong>${fmt(currH)}/h</strong>、必要単価<strong>${fmt(recUnit)}/h</strong>（約${ratio.toFixed(1)}倍）。単価交渉だけでは届きません。`});
+    conditions = [
+      `提供サービスの再設計で単価<strong>${fmt(recUnit)}/h</strong>を実現すること`,
+      `または目標時給を<strong>${fmt(Math.round(currH*1.5))}/h</strong>に現実的な水準へ修正すること`,
+      '上記どちらもできない場合は、この副業は継続しないことを推奨します',
+    ];
+
   } else {
-    cls='caution';ic='🟡';tx='この副業は「もう少しで黒字」—— 改善余地あり';
-    reasons.push({i:'📊',t:`実質時給${hrs>0?fmt(jikyuM)+'/h':'—'} は目標の${goalAch.toFixed(0)}%。あと一歩。`});
-    reasons.push({i:'🎯',t:`単価を ${fmt(recUnit)}/h に引き上げると目標達成できます。`});
+    /* ⛔ STOP: 構造的に無理 → やめるべき */
+    cls='stop'; ic='⛔'; badge='やめるべき';
+    const ratioLabel = ratio >= 10 ? `${ratio.toFixed(0)}倍` : `${ratio.toFixed(1)}倍`;
+    tx=`この副業は続けると損する可能性が高いです — ${ratioLabel}のギャップは構造的に無理`;
+    reasons.push({i:'⛔', t:`現在単価<strong>${fmt(currH)}/h</strong>、必要単価<strong>${fmt(recUnit)}/h</strong>（<strong>${ratioLabel}</strong>）。交渉・戦略変更では埋まらない構造的な問題です。`});
+    reasons.push({i:'🔄', t:'同じ時間を高単価な副業または本業スキルアップに使う方が合理的です。'});
   }
-  if(itype==='misc'&&sideY>600000) reasons.push({i:'💼',t:'事業所得（青色申告）に切り替えると手取りがさらに改善できます。'});
-  block.className=`vt vt-${cls}`;
-  icon.textContent=ic; title.textContent=tx;
-  body.innerHTML=reasons.map(r=>`<div class="vt-r"><span class="vt-ri">${r.i}</span><span>${r.t}</span></div>`).join('');
+
+  block.className = `vt vt-${cls}`;
+  icon.textContent = ic;
+  title.textContent = tx;
+
+  const badgeHtml = `<div class="vt-verdict-badge">${badge}</div>`;
+  const reasonsHtml = reasons.map(r=>
+    `<div class="vt-r"><span class="vt-ri">${r.i}</span><span>${r.t}</span></div>`
+  ).join('');
+  const condHtml = conditions.length > 0
+    ? `<div class="vt-cond-conditions">
+        <strong>この副業を実行するための必須条件：</strong><br>
+        ${conditions.map((c,i)=>`${i+1}. ${c}`).join('<br>')}
+       </div>` : '';
+
+  if(itype==='misc'&&sideY>600000&&cls==='go')
+    reasons.push({i:'💼',t:'事業所得（青色申告）に切り替えると手取りがさらに改善できます。'});
+
+  body.innerHTML = badgeHtml + reasonsHtml + condHtml;
 }
 
 /* ──────── WHAT-IF ──────── */
